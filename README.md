@@ -7,7 +7,7 @@ A complete, production-ready AI/ML platform with GPU support, monitoring, and de
 - **Full-Stack AI Platform**: Complete environment for AI/ML development and deployment
 - **GPU Support**: Optimized for NVIDIA GPUs with CUDA 12.8 and PyTorch/TensorFlow
 - **Jupyter Lab**: Interactive development environment with GPU acceleration
-- **Monitoring**: Prometheus, Grafana, and Node Exporter for system monitoring
+- **Monitoring**: Prometheus, Grafana, and Node Exporter with pre-configured data sources
 - **Database**: PostgreSQL for persistent storage
 - **Caching**: Redis for high-performance caching
 - **Reverse Proxy**: Nginx for secure HTTP routing
@@ -48,8 +48,8 @@ The platform consists of the following services:
 - **jupyter**: Jupyter Lab for interactive development
 - **postgres**: PostgreSQL database
 - **redis**: Redis cache
-- **prometheus**: Metrics collection
-- **grafana**: Monitoring dashboards
+- **prometheus**: Metrics collection and storage
+- **grafana**: Monitoring visualization (with pre-configured datasources)
 - **node-exporter**: System metrics
 - **nginx**: Reverse proxy
 
@@ -92,12 +92,15 @@ The main application is built with FastAPI. Modify `app/main.py` to add new endp
 
 ### Grafana Dashboards
 
-Access Grafana at http://localhost:3001 with credentials `admin/admin`. Pre-configured dashboards include:
+Access Grafana at http://localhost:3001 with credentials `admin/admin`. The platform includes:
 
-- System metrics
-- GPU utilization
-- Container performance
-- Application metrics
+- **Pre-configured Prometheus datasource** for metrics collection
+- **Basic monitoring infrastructure** ready for dashboard creation
+- **System metrics** available from Node Exporter
+- **Container metrics** from Docker
+- **Application metrics** from the main application
+
+**Note**: While the monitoring infrastructure is pre-configured, you'll need to create custom dashboards in Grafana to visualize the metrics. The platform provides the data sources and metrics collection, but dashboard creation is left to the user.
 
 ### GPU Monitoring
 
