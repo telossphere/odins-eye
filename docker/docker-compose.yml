@@ -1,0 +1,201 @@
+services:
+  # Main Odin AI application
+  odins-ai:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: odins-ai
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "3002:3002"
+      - "3003:3003"
+      - "3004:3004"
+    volumes:
+      - odins-ai-data:/opt/odins-ai/data
+      - ai-models:/opt/ai/models
+      - huggingface-cache:/opt/ai/huggingface
+      - transformers-cache:/opt/ai/transformers
+      - datasets-cache:/opt/ai/datasets
+      - logs:/var/log/odins-ai
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    group_add:
+      - "988"
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - TF_FORCE_GPU_ALLOW_GROWTH=true
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
+      - HF_HOME=/opt/ai/huggingface
+      - TRANSFORMERS_CACHE=/opt/ai/transformers
+      - HF_DATASETS_CACHE=/opt/ai/datasets
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - odins-ai-network
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15
+    container_name: odins-ai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: odins_ai
+      POSTGRES_USER: odin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - odins-ai-network
+
+  # Redis for caching and message queue
+  redis:
+    image: redis:7-alpine
+    container_name: odins-ai-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - odins-ai-network
+
+  # Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: odins-ai-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - odins-ai-network
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: odins-ai-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - odins-ai-network
+
+  # Node Exporter for system metrics
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: odins-ai-node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - odins-ai-network
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: odins-ai-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+      - ./config/ssl:/etc/nginx/ssl
+    depends_on:
+      - odins-ai
+    networks:
+      - odins-ai-network
+
+  # Jupyter Lab for development
+  jupyter:
+    image: nvcr.io/nvidia/tensorflow:25.02-tf2-py3
+    container_name: odins-ai-jupyter
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    volumes:
+      - odins-ai-data:/workspace
+      - ai-models:/opt/ai/models
+      - huggingface-cache:/opt/ai/huggingface
+      - logs:/var/log/odins-ai
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    group_add:
+      - "988"
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - TF_FORCE_GPU_ALLOW_GROWTH=true
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
+    command: >
+      bash -c "\
+        pip install --upgrade pip && \
+        pip install jupyterlab && \
+        pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128 && \
+        jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' \
+      "
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - odins-ai-network
+
+volumes:
+  odins-ai-data:
+    driver: local
+  ai-models:
+    driver: local
+  huggingface-cache:
+    driver: local
+  transformers-cache:
+    driver: local
+  datasets-cache:
+    driver: local
+  logs:
+    driver: local
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  odins-ai-network:
+    driver: bridge 

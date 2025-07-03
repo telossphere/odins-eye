@@ -1,0 +1,73 @@
+# Odin's AI Platform - .gitignore
+
+# Data and logs
+data/
+logs/
+models/
+config/local/
+
+# Docker
+.dockerignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Environment files
+.env
+.env.local
+
+# Test files
+test-results/
+coverage/
+
+# Build artifacts
+build/
+dist/
+*.tar.gz
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+.env/
+
+# Node.js (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Backup files
+*.backup
+*.old
+
+# Database files
+*.db
+*.sqlite
+
+# Cache directories
+.cache/
+__pycache__/
+.pytest_cache/

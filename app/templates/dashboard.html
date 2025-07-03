@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odin's AI - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px 0;
+        }
+
+        .metric-label {
+            font-weight: 500;
+            color: #666;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #4CAF50;
+        }
+
+        .status-offline {
+            background: #f44336;
+        }
+
+        .status-unknown {
+            background: #ff9800;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: transform 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🪄 Odin's AI</h1>
+            <p>Advanced AI/ML Platform Dashboard</p>
+        </div>
+
+        <button class="refresh-btn" onclick="refreshData()">🔄 Refresh Data</button>
+
+        <div class="dashboard-grid">
+            <!-- System Status -->
+            <div class="card">
+                <h3>🖥️ System Status</h3>
+                <div id="system-status">
+                    <div class="loading">Loading system information...</div>
+                </div>
+            </div>
+
+            <!-- CPU Usage -->
+            <div class="card">
+                <h3>⚡ CPU Usage</h3>
+                <div id="cpu-info">
+                    <div class="loading">Loading CPU data...</div>
+                </div>
+            </div>
+
+            <!-- Memory Usage -->
+            <div class="card">
+                <h3>💾 Memory Usage</h3>
+                <div id="memory-info">
+                    <div class="loading">Loading memory data...</div>
+                </div>
+            </div>
+
+            <!-- Disk Usage -->
+            <div class="card">
+                <h3>💿 Disk Usage</h3>
+                <div id="disk-info">
+                    <div class="loading">Loading disk data...</div>
+                </div>
+            </div>
+
+            <!-- GPU Status -->
+            <div class="card">
+                <h3>🎮 GPU Status</h3>
+                <div id="gpu-info">
+                    <div class="loading">Loading GPU data...</div>
+                </div>
+            </div>
+
+            <!-- GPU Monitor -->
+            <div class="card">
+                <h3>📊 GPU Monitor</h3>
+                <div style="text-align: center; padding: 20px;">
+                    <p style="margin-bottom: 15px; color: #666;">Real-time GPU monitoring with charts and process tracking</p>
+                    <a href="/gpu" style="
+                        display: inline-block;
+                        background: linear-gradient(135deg, #667eea, #764ba2);
+                        color: white;
+                        text-decoration: none;
+                        padding: 12px 24px;
+                        border-radius: 25px;
+                        font-weight: 500;
+                        transition: transform 0.2s ease;
+                    " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        🎯 Open GPU Monitor
+                    </a>
+                </div>
+            </div>
+
+            <!-- Services -->
+            <div class="card">
+                <h3>🔧 Services</h3>
+                <div id="services-info">
+                    <div class="loading">Loading services data...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatPercent(value) {
+            return Math.round(value * 100) / 100 + '%';
+        }
+
+        function getStatusClass(status) {
+            switch(status.toLowerCase()) {
+                case 'running':
+                case 'online':
+                    return 'status-online';
+                case 'not running':
+                case 'offline':
+                    return 'status-offline';
+                default:
+                    return 'status-unknown';
+            }
+        }
+
+        async function fetchData(endpoint) {
+            try {
+                const response = await fetch(endpoint);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching ${endpoint}:`, error);
+                return { error: error.message };
+            }
+        }
+
+        function updateSystemStatus(data) {
+            const container = document.getElementById('system-status');
+            if (data.error) {
+                container.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                return;
+            }
+
+            const timestamp = new Date(data.timestamp).toLocaleString();
+            container.innerHTML = `
+                <div class="metric">
+                    <span class="metric-label">Status</span>
+                    <span class="metric-value">
+                        <span class="status-indicator status-online"></span>
+                        Online
+                    </span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Last Updated</span>
+                    <span class="metric-value">${timestamp}</span>
+                </div>
+            `;
+        }
+
+        function updateCPUInfo(data) {
+            const container = document.getElementById('cpu-info');
+            if (data.error) {
+                container.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="metric">
+                    <span class="metric-label">Usage</span>
+                    <span class="metric-value">${formatPercent(data.cpu_percent)}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${data.cpu_percent}%"></div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Cores</span>
+                    <span class="metric-value">${data.cpu_count}</span>
+                </div>
+            `;
+        }
+
+        function updateMemoryInfo(data) {
+            const container = document.getElementById('memory-info');
+            if (data.error) {
+                container.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                return;
+            }
+
+            const usedPercent = (data.memory_used / data.memory_total) * 100;
+            container.innerHTML = `
+                <div class="metric">
+                    <span class="metric-label">Used</span>
+                    <span class="metric-value">${formatBytes(data.memory_used)}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Total</span>
+                    <span class="metric-value">${formatBytes(data.memory_total)}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Usage</span>
+                    <span class="metric-value">${formatPercent(usedPercent)}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${usedPercent}%"></div>
+                </div>
+            `;
+        }
+
+        function updateDiskInfo(data) {
+            const container = document.getElementById('disk-info');
+            if (data.error) {
+                container.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="metric">
+                    <span class="metric-label">Used</span>
+                    <span class="metric-value">${formatBytes(data.disk_used)}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Total</span>
+                    <span class="metric-value">${formatBytes(data.disk_total)}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Usage</span>
+                    <span class="metric-value">${formatPercent(data.disk_percent)}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${data.disk_percent}%"></div>
+                </div>
+            `;
+        }
+
+        function updateGPUInfo(data) {
+            const container = document.getElementById('gpu-info');
+            if (data.error) {
+                container.innerHTML = `<div class="metric">
+                    <span class="metric-label">Status</span>
+                    <span class="metric-value">Not Available</span>
+                </div>`;
+                return;
+            }
+
+            if (data.gpus && data.gpus.length > 0) {
+                let gpuHtml = '';
+                data.gpus.forEach((gpu, index) => {
+                    gpuHtml += `
+                        <div class="metric">
+                            <span class="metric-label">GPU ${index + 1}</span>
+                            <span class="metric-value">${gpu.name}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Memory</span>
+                            <span class="metric-value">${gpu.memory_used}MB / ${gpu.memory_total}MB</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Temp</span>
+                            <span class="metric-value">${gpu.temperature}°C</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Utilization</span>
+                            <span class="metric-value">${gpu.utilization}%</span>
+                        </div>
+                        ${index < data.gpus.length - 1 ? '<hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">' : ''}
+                    `;
+                });
+                container.innerHTML = gpuHtml;
+            } else {
+                container.innerHTML = `<div class="metric">
+                    <span class="metric-label">Status</span>
+                    <span class="metric-value">No GPUs detected</span>
+                </div>`;
+            }
+        }
+
+        function updateServicesInfo(data) {
+            const container = document.getElementById('services-info');
+            if (data.error) {
+                container.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                return;
+            }
+
+            let servicesHtml = `
+                <div class="metric">
+                    <span class="metric-label">Docker</span>
+                    <span class="metric-value">
+                        <span class="status-indicator ${getStatusClass(data.docker)}"></span>
+                        ${data.docker}
+                    </span>
+                </div>
+            `;
+
+            // Add container information if available
+            if (data.containers && data.containers.length > 0) {
+                servicesHtml += `<div class="metric">
+                    <span class="metric-label">Containers</span>
+                    <span class="metric-value">${data.containers.length} running</span>
+                </div>`;
+                
+                data.containers.forEach((container_info, index) => {
+                    const statusClass = getStatusClass(container_info.status);
+                    servicesHtml += `
+                        <div class="metric" style="margin-left: 15px; font-size: 0.9em;">
+                            <span class="metric-label">${container_info.name}</span>
+                            <span class="metric-value">
+                                <span class="status-indicator ${statusClass}"></span>
+                                ${container_info.status}
+                            </span>
+                        </div>
+                    `;
+                    if (container_info.ports) {
+                        servicesHtml += `
+                            <div class="metric" style="margin-left: 30px; font-size: 0.8em; color: #666;">
+                                <span class="metric-label">Ports</span>
+                                <span class="metric-value">${container_info.ports}</span>
+                            </div>
+                        `;
+                    }
+                });
+            } else if (data.docker === 'running') {
+                servicesHtml += `<div class="metric">
+                    <span class="metric-label">Containers</span>
+                    <span class="metric-value">No containers running</span>
+                </div>`;
+            }
+
+            container.innerHTML = servicesHtml;
+        }
+
+        async function refreshData() {
+            // Fetch all data
+            const [systemData, gpuData, servicesData] = await Promise.all([
+                fetchData('/api/status'),
+                fetchData('/api/gpu'),
+                fetchData('/api/services')
+            ]);
+
+            // Update all sections
+            updateSystemStatus(systemData);
+            updateCPUInfo(systemData);
+            updateMemoryInfo(systemData);
+            updateDiskInfo(systemData);
+            updateGPUInfo(gpuData);
+            updateServicesInfo(servicesData);
+        }
+
+        // Initial load
+        refreshData();
+
+        // Auto-refresh every 30 seconds
+        setInterval(refreshData, 30000);
+    </script>
+</body>
+</html> 

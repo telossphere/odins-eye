@@ -1,0 +1,82 @@
+# Odin's AI Docker Image
+# Based on PyTorch nightly with CUDA 12.8 and cuDNN 9 for full RTX 5090 (Blackwell) support
+# See: https://pytorch.org/get-started/locally/ for latest tags
+
+FROM pytorch/pytorch:2.7.1-cuda12.8-cudnn9-runtime
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=America/New_York
+ENV PYTHONUNBUFFERED=1
+ENV CUDA_VISIBLE_DEVICES=0
+ENV TF_FORCE_GPU_ALLOW_GROWTH=true
+ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl wget git gnupg ca-certificates unzip lsb-release \
+    build-essential dkms htop neofetch tmux net-tools pciutils \
+    software-properties-common apt-transport-https \
+    python3-dev \
+    libblas-dev liblapack-dev libatlas-base-dev \
+    libhdf5-dev libhdf5-serial-dev \
+    libjpeg-dev libpng-dev libtiff-dev \
+    libavcodec-dev libavformat-dev libswscale-dev \
+    libv4l-dev libxvidcore-dev libx264-dev \
+    libgtk-3-dev libcanberra-gtk3-module \
+    libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+    jq tree ncdu iotop nethogs speedtest-cli ffmpeg imagemagick \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install NVIDIA utilities for GPU monitoring
+RUN apt-get update && apt-get install -y \
+    nvidia-utils-535 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && apt-get install -y docker-ce-cli && rm -rf /var/lib/apt/lists/*
+
+# Create application user with correct UID/GID to match host
+RUN groupadd -g 988 docker && \
+    useradd -m -s /bin/bash -u 1000 -g 988 odin && \
+    mkdir -p /opt/odins-ai /opt/ai/models /opt/ai/huggingface /var/log/odins-ai && \
+    chown -R odin:docker /opt/odins-ai /opt/ai /var/log/odins-ai
+
+# Set working directory
+WORKDIR /opt/odins-ai
+
+# Copy application files
+COPY --chown=odin:odin . /opt/odins-ai/
+
+# Create necessary directories and set permissions
+RUN mkdir -p /opt/odins-ai/{logs,config,models} && \
+    chown -R odin:docker /opt/odins-ai
+
+# Install additional Python dependencies for the AI application
+RUN pip install --no-cache-dir \
+    flask fastapi uvicorn \
+    numpy pandas matplotlib \
+    requests aiohttp \
+    pillow opencv-python \
+    tqdm rich click \
+    psutil jinja2 \
+    jupyterlab jupyter \
+    tensorflow[and-cuda] \
+    scikit-learn scipy \
+    transformers datasets \
+    accelerate
+
+# Switch to application user
+USER odin
+
+# Expose ports
+EXPOSE 8080 3000 3001 3002 8888
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python3 -c "print('Container is healthy')" || exit 1
+
+# Default command - start the AI application
+CMD ["python3", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"] 
