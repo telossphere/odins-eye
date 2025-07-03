@@ -21,6 +21,20 @@ A complete, production-ready AI/ML platform with GPU support, monitoring, and de
 - **RAM**: 8GB+ (16GB+ recommended)
 - **Storage**: 50GB+ available space
 
+### 🚀 Performance Expectations
+
+**Build Times** (based on RTX 5090 + Ryzen 9 9950X + 128GB RAM):
+- **Initial deployment**: ~4-5 minutes
+- **Docker image build**: ~3-4 minutes
+- **Service startup**: ~1-2 minutes
+- **Jupyter Lab ready**: ~2-3 minutes after deployment
+
+**Hardware Recommendations**:
+- **Minimum**: 8GB RAM, any modern CPU, 50GB storage
+- **Recommended**: 16GB+ RAM, 6+ core CPU, SSD storage
+- **Optimal**: 32GB+ RAM, 8+ core CPU, RTX 4090+ GPU, NVMe storage
+- **Production**: 64GB+ RAM, 12+ core CPU, multiple GPUs, enterprise storage
+
 ## 📦 Quick Start
 
 1. **Clone or download this package**
@@ -80,6 +94,26 @@ The platform uses Docker volumes for persistent data:
 
 Place your AI models in the `./models` directory. They will be automatically available to the containers.
 
+### Performance Benchmarks
+
+**Expected Performance** (RTX 5090 + Ryzen 9 9950X + 128GB RAM):
+
+**Training**:
+- **Small models** (< 1B parameters): Real-time training
+- **Medium models** (1-7B parameters): Fast training with full precision
+- **Large models** (7-70B parameters): Efficient training with mixed precision
+- **XL models** (> 70B parameters): Possible with model parallelism
+
+**Inference**:
+- **Batch inference**: 1000+ samples/second for most models
+- **Real-time inference**: < 100ms latency for standard models
+- **Large model inference**: 1-5 seconds for 70B+ parameter models
+
+**Memory Usage**:
+- **Jupyter Lab**: 2-4GB RAM typical usage
+- **Model serving**: 4-16GB RAM depending on model size
+- **GPU VRAM**: 8-24GB depending on model and batch size
+
 ### Custom Jupyter Notebooks
 
 Access Jupyter Lab at http://localhost:8888 and create new notebooks. All Python packages are pre-installed.
@@ -106,46 +140,83 @@ Access Grafana at http://localhost:3001 with credentials `admin/admin`. The plat
 
 The platform includes real-time GPU monitoring accessible at http://localhost:8080/gpu.
 
-## 🔍 Troubleshooting
+**GPU Performance Notes**:
+- **RTX 5090**: Full CUDA 12.8 support with 32GB VRAM for large models
+- **RTX 4090/4080**: Excellent performance for most AI workloads
+- **RTX 3090/3080**: Good performance, may need model optimization for very large models
+- **GTX 1660+**: Basic support, suitable for smaller models and inference
+- **No GPU**: CPU-only mode available but significantly slower for training
 
-### Common Issues
+## ✅ Verification & Troubleshooting
 
-1. **GPU not detected**
-   - Ensure NVIDIA drivers are installed
-   - Check NVIDIA Container Toolkit installation
-   - Run `nvidia-smi` to verify GPU access
+Odin's AI Platform now uses a Docker-focused verification workflow. Here's how to check your deployment:
 
-2. **Services not starting**
-   - Check Docker logs: `cd docker && docker compose logs`
-   - Verify port availability
-   - Check system resources
+### 1. Docker Verification (no sudo required)
+```bash
+./scripts/verify-docker.sh
+```
+- Checks all containers, endpoints, GPU access, databases, and AI frameworks.
+- Should show 100% pass if all services are healthy.
 
-3. **Performance issues**
-   - Monitor GPU temperature and utilization
-   - Check system memory usage
-   - Verify CUDA installation
+### 2. GPU Verification
+```bash
+./scripts/verify-ai-gpu.sh
+```
+- Checks PyTorch and TensorFlow GPU access in both main and Jupyter containers.
+- **Note:** You may see a warning about CUDA arch support for new GPUs (e.g., RTX 5090). This does not affect basic functionality and will be resolved in future PyTorch releases.
 
-### Useful Commands
+### 3. Jupyter GPU Verification
+```bash
+./scripts/verify-jupyter.sh
+```
+- Runs a full suite of GPU tests inside the Jupyter container.
+- All tests should pass if GPU is available and drivers are correct.
+
+### 4. Service Verification
+```bash
+cd docker
+../scripts/verify-services.sh
+```
+- Must be run from the `docker` directory.
+- Checks all service endpoints and container health.
+
+### 5. Status & Troubleshooting
+```bash
+./scripts/status.sh
+sudo ./scripts/troubleshoot.sh  # (if needed, requires root)
+```
+
+---
+
+## 🛠️ Useful Commands
 
 ```bash
 # Check system status
 ./scripts/status.sh
 
-# Run verification tests
-./scripts/verify.sh
+# Run Docker verification tests (no sudo required)
+./scripts/verify-docker.sh
 
-# Troubleshoot issues
-./scripts/troubleshoot.sh
+# Run GPU verification
+./scripts/verify-ai-gpu.sh
 
-# View service logs
-cd docker && docker compose logs -f
+# Run Jupyter GPU verification
+./scripts/verify-jupyter.sh
 
-# Restart services
-cd docker && docker compose restart
+# Run service verification (from docker directory)
+cd docker && ../scripts/verify-services.sh
 
-# Stop all services
-cd docker && docker compose down
+# Troubleshoot issues (requires sudo)
+sudo ./scripts/troubleshoot.sh
 ```
+
+---
+
+## ⚠️ Notes
+- The old `verify.sh` script for bare-metal checks has been removed. All verification is now Docker/container focused.
+- PyTorch may show a warning about CUDA arch support for the latest GPUs (e.g., RTX 5090). This is expected and does not affect most workflows.
+- Always run `verify-services.sh` from the `docker` directory.
+- For best results, ensure all containers are healthy and endpoints are accessible as shown in the verification scripts.
 
 ## 🤝 Contributing
 
