@@ -53,6 +53,7 @@ venv/
 env/
 .venv/
 .env/
+.mypy_cache
 
 # Node.js (if any)
 node_modules/
