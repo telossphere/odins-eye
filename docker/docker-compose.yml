@@ -44,7 +44,7 @@ services:
     container_name: odins-eye-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: odins_ai
+      POSTGRES_DB: odins_eye
       POSTGRES_USER: odin
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password}
     volumes:
