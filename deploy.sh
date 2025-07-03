@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Odin's AI Platform - One-Command Deployment Script
-# Deploys the complete Odin's AI platform with all services
+# Odin's Eye Platform - One-Command Deployment Script
+# Deploys the complete Odin's Eye platform with all services
 
 set -e
 
@@ -12,7 +12,7 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-echo -e "${BLUE}🚀 Odin's AI Platform Deployment${NC}"
+echo -e "${BLUE}🚀 Odin's Eye Platform Deployment${NC}"
 echo -e "${CYAN}Complete AI/ML Platform with GPU Support${NC}"
 echo
 
@@ -57,7 +57,7 @@ create_directories() {
 
 create_docker_configs() {
     echo -e "${BLUE}⚙️  Creating Docker configuration files...${NC}"
-    
+
     # Create Prometheus configuration
     cat > ./docker/config/prometheus.yml << 'PROMETHEUS_EOF'
 global:
@@ -77,9 +77,9 @@ scrape_configs:
     static_configs:
       - targets: ['node-exporter:9100']
 
-  - job_name: 'odins-ai'
+  - job_name: 'odins-eye'
     static_configs:
-      - targets: ['odins-ai:8080']
+      - targets: ['odins-eye:8080']
 PROMETHEUS_EOF
 
     # Create Nginx configuration
@@ -89,8 +89,8 @@ events {
 }
 
 http {
-    upstream odins_ai {
-        server odins-ai:8080;
+    upstream odins_eye {
+        server odins-eye:8080;
     }
 
     upstream grafana {
@@ -106,7 +106,7 @@ http {
         server_name localhost;
 
         location / {
-            proxy_pass http://odins_ai;
+            proxy_pass http://odins_eye;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -178,38 +178,38 @@ stop_existing() {
 deploy_services() {
     echo -e "${BLUE}🔨 Building and starting services...${NC}"
     echo -e "${YELLOW}This may take 5-10 minutes for the initial build...${NC}"
-    
+
     cd docker
     docker compose build --no-cache
     docker compose up -d
     cd ..
-    
+
     echo -e "${GREEN}✅ Services started${NC}"
 }
 
 wait_for_services() {
     echo -e "${BLUE}⏳ Waiting for services to be ready...${NC}"
-    
+
     # Wait for main app
     local max_attempts=60
     local attempt=1
-    
+
     while [ $attempt -le $max_attempts ]; do
         if curl -s "http://localhost:8080/api/health" > /dev/null 2>&1; then
             echo -e "${GREEN}✅ Main application is ready!${NC}"
             break
         fi
-        
+
         echo -e "${YELLOW}Attempt $attempt/$max_attempts - Main app not ready yet...${NC}"
         sleep 10
         ((attempt++))
     done
-    
+
     if [ $attempt -gt $max_attempts ]; then
         echo -e "${RED}❌ Main application failed to start within expected time${NC}"
         return 1
     fi
-    
+
     # Wait for Jupyter
     attempt=1
     while [ $attempt -le $max_attempts ]; do
@@ -217,16 +217,16 @@ wait_for_services() {
             echo -e "${GREEN}✅ Jupyter Lab is ready!${NC}"
             break
         fi
-        
+
         echo -e "${YELLOW}Attempt $attempt/$max_attempts - Jupyter not ready yet...${NC}"
         sleep 10
         ((attempt++))
     done
-    
+
     if [ $attempt -gt $max_attempts ]; then
         echo -e "${YELLOW}⚠️  Jupyter Lab may still be starting up...${NC}"
     fi
-    
+
     # Wait for Grafana
     attempt=1
     while [ $attempt -le $max_attempts ]; do
@@ -234,12 +234,12 @@ wait_for_services() {
             echo -e "${GREEN}✅ Grafana is ready!${NC}"
             break
         fi
-        
+
         echo -e "${YELLOW}Attempt $attempt/$max_attempts - Grafana not ready yet...${NC}"
         sleep 10
         ((attempt++))
     done
-    
+
     if [ $attempt -gt $max_attempts ]; then
         echo -e "${YELLOW}⚠️  Grafana may still be starting up...${NC}"
     fi
@@ -250,7 +250,7 @@ show_status() {
     cd docker
     docker compose ps
     cd ..
-    
+
     echo -e "\n${BLUE}📋 Container Logs:${NC}"
     cd docker
     docker compose logs --tail=10
@@ -288,11 +288,11 @@ main() {
     check_prerequisites
     create_directories
     create_docker_configs
-    
+
     echo -e "\n${BLUE}🚀 Starting deployment...${NC}"
     stop_existing
     deploy_services
-    
+
     echo -e "\n${BLUE}⏳ Waiting for services to be ready...${NC}"
     if wait_for_services; then
         show_status

@@ -1,4 +1,4 @@
-# Odin's AI Platform
+# Odin's Eye Platform
 
 A complete, production-ready AI/ML platform with GPU support, monitoring, and development tools.
 
@@ -12,6 +12,16 @@ A complete, production-ready AI/ML platform with GPU support, monitoring, and de
 - **Caching**: Redis for high-performance caching
 - **Reverse Proxy**: Nginx for secure HTTP routing
 - **One-Command Deployment**: Simple deployment script for easy setup
+
+## 🧩 AI/ML Framework Versions
+
+| Container         | CUDA Version | PyTorch Version         | TensorFlow Version |
+|------------------|-------------|------------------------|-------------------|
+| Main App         | 12.8        | 2.7.1+cu128            | Not installed     |
+| Jupyter Notebook | 12.8        | 2.9.0.dev20250702+cu128| 2.17.0            |
+
+- **Main App**: Based on `pytorch/pytorch:2.7.1-cuda12.8-cudnn9-runtime`.
+- **Jupyter**: Based on `nvcr.io/nvidia/tensorflow:25.02-tf2-py3` with nightly PyTorch installed at runtime.
 
 ## 🛠️ Requirements
 
@@ -40,7 +50,7 @@ A complete, production-ready AI/ML platform with GPU support, monitoring, and de
 1. **Clone or download this package**
    ```bash
    git clone <repository-url>
-   cd odins-ai-platform-v1.0.0
+   cd odins-eye-v1.0.0
    ```
 
 2. **Deploy the platform**
@@ -58,7 +68,7 @@ A complete, production-ready AI/ML platform with GPU support, monitoring, and de
 
 The platform consists of the following services:
 
-- **odins-ai**: Main FastAPI application with web dashboard
+- **odins-eye**: Main FastAPI application with web dashboard
 - **jupyter**: Jupyter Lab for interactive development
 - **postgres**: PostgreSQL database
 - **redis**: Redis cache
@@ -149,7 +159,7 @@ The platform includes real-time GPU monitoring accessible at http://localhost:80
 
 ## ✅ Verification & Troubleshooting
 
-Odin's AI Platform now uses a Docker-focused verification workflow. Here's how to check your deployment:
+Odin's Eye Platform now uses a Docker-focused verification workflow. Here's how to check your deployment:
 
 ### 1. Docker Verification (no sudo required)
 ```bash
@@ -217,6 +227,40 @@ sudo ./scripts/troubleshoot.sh
 - PyTorch may show a warning about CUDA arch support for the latest GPUs (e.g., RTX 5090). This is expected and does not affect most workflows.
 - Always run `verify-services.sh` from the `docker` directory.
 - For best results, ensure all containers are healthy and endpoints are accessible as shown in the verification scripts.
+
+## 🛠️ Developer Experience (DX)
+
+### Setup Development Tools
+```bash
+./scripts/setup-dx.sh
+```
+
+This installs:
+- **Python tools**: Black (formatter), isort (import sorter), flake8 (linter), mypy (type checker)
+- **System tools**: ShellCheck (shell script linter), Hadolint (Dockerfile linter)
+- **Git hooks**: Pre-commit hooks for automatic formatting and linting
+
+### Available Commands
+```bash
+# Format and lint Python code
+black .                    # Format code
+isort .                    # Sort imports
+flake8 .                   # Lint code
+mypy .                     # Type check
+
+# Lint other files
+shellcheck scripts/*.sh    # Lint shell scripts
+hadolint docker/Dockerfile # Lint Dockerfile
+
+# Run all checks
+pre-commit run --all-files # Run all pre-commit hooks
+```
+
+### VS Code Integration
+The workspace includes:
+- **Recommended extensions** (auto-installed in remote SSH)
+- **Workspace settings** for consistent formatting
+- **EditorConfig** for cross-editor consistency
 
 ## 🤝 Contributing
 

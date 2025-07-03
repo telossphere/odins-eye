@@ -221,12 +221,12 @@
             .grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .status-bar {
                 flex-direction: column;
                 gap: 10px;
             }
-            
+
             .gpu-info {
                 grid-template-columns: 1fr;
             }
@@ -335,11 +335,11 @@
 
         function initializeCharts() {
             const chartTypes = ['utilization', 'memory', 'temperature', 'power'];
-            
+
             chartTypes.forEach(type => {
                 const ctx = document.getElementById(`${type}Chart`).getContext('2d');
                 const config = chartConfigs[type];
-                
+
                 charts[type] = new Chart(ctx, {
                     type: 'line',
                     data: {
@@ -392,13 +392,13 @@
             gpuData.forEach((gpu, index) => {
                 // Update utilization chart
                 updateChart('utilization', timeLabel, gpu.utilization, index);
-                
+
                 // Update memory chart
                 updateChart('memory', timeLabel, gpu.memory_percent, index);
-                
+
                 // Update temperature chart
                 updateChart('temperature', timeLabel, gpu.temperature, index);
-                
+
                 // Update power chart
                 updateChart('power', timeLabel, gpu.power_draw, index);
             });
@@ -412,7 +412,7 @@
             if (gpuIndex === 0) {
                 chart.data.labels.push(label);
                 chart.data.datasets[0].data.push(value);
-                
+
                 // Remove old data points if too many
                 if (chart.data.labels.length > maxDataPoints) {
                     chart.data.labels.shift();
@@ -438,7 +438,7 @@
                     });
                 }
             }
-            
+
             chart.update('none');
         }
 
@@ -450,7 +450,7 @@
         // Update GPU details
         function updateGPUDetails(gpuData) {
             const container = document.getElementById('gpu-details');
-            
+
             if (!gpuData || gpuData.length === 0) {
                 container.innerHTML = '<div class="error-message">No GPU data available</div>';
                 return;
@@ -490,7 +490,7 @@
         // Update processes table
         function updateProcesses(processes) {
             const container = document.getElementById('processes-container');
-            
+
             if (!processes || processes.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #718096; padding: 20px;">No GPU processes found. This is normal when no AI workloads are running.</p>';
                 return;
@@ -522,7 +522,7 @@
                     </tbody>
                 </table>
             `;
-            
+
             container.innerHTML = table;
         }
 
@@ -580,7 +580,7 @@
 
         // Auto refresh
         let autoRefreshInterval;
-        
+
         function toggleAutoRefresh() {
             const checkbox = document.getElementById('auto-refresh');
             if (checkbox.checked) {
@@ -597,10 +597,10 @@
             initializeCharts();
             fetchData();
             toggleAutoRefresh();
-            
+
             // Event listeners
             document.getElementById('auto-refresh').addEventListener('change', toggleAutoRefresh);
         });
     </script>
 </body>
-</html> 
+</html>

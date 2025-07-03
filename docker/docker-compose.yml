@@ -1,10 +1,10 @@
 services:
-  # Main Odin AI application
-  odins-ai:
+  # Main Odin Eye application
+  odins-eye:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: odins-ai
+    container_name: odins-eye
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -12,12 +12,12 @@ services:
       - "3003:3003"
       - "3004:3004"
     volumes:
-      - odins-ai-data:/opt/odins-ai/data
+      - odins-eye-data:/opt/odins-eye/data
       - ai-models:/opt/ai/models
       - huggingface-cache:/opt/ai/huggingface
       - transformers-cache:/opt/ai/transformers
       - datasets-cache:/opt/ai/datasets
-      - logs:/var/log/odins-ai
+      - logs:/var/log/odins-eye
       - /var/run/docker.sock:/var/run/docker.sock:ro
     group_add:
       - "988"
@@ -34,17 +34,17 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities: [ gpu ]
     networks:
-      - odins-ai-network
+      - odins-eye-network
 
   # PostgreSQL database
   postgres:
     image: postgres:15
-    container_name: odins-ai-postgres
+    container_name: odins-eye-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: odins_ai
+      POSTGRES_DB: odins_eye
       POSTGRES_USER: odin
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password}
     volumes:
@@ -52,12 +52,12 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - odins-ai-network
+      - odins-eye-network
 
   # Redis for caching and message queue
   redis:
     image: redis:7-alpine
-    container_name: odins-ai-redis
+    container_name: odins-eye-redis
     restart: unless-stopped
     command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
     volumes:
@@ -65,12 +65,12 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - odins-ai-network
+      - odins-eye-network
 
   # Prometheus for monitoring
   prometheus:
     image: prom/prometheus:latest
-    container_name: odins-ai-prometheus
+    container_name: odins-eye-prometheus
     restart: unless-stopped
     ports:
       - "9090:9090"
@@ -85,12 +85,12 @@ services:
       - '--storage.tsdb.retention.time=200h'
       - '--web.enable-lifecycle'
     networks:
-      - odins-ai-network
+      - odins-eye-network
 
   # Grafana for visualization
   grafana:
     image: grafana/grafana:latest
-    container_name: odins-ai-grafana
+    container_name: odins-eye-grafana
     restart: unless-stopped
     ports:
       - "3001:3000"
@@ -101,12 +101,12 @@ services:
       - grafana-data:/var/lib/grafana
       - ./config/grafana/provisioning:/etc/grafana/provisioning
     networks:
-      - odins-ai-network
+      - odins-eye-network
 
   # Node Exporter for system metrics
   node-exporter:
     image: prom/node-exporter:latest
-    container_name: odins-ai-node-exporter
+    container_name: odins-eye-node-exporter
     restart: unless-stopped
     ports:
       - "9100:9100"
@@ -120,12 +120,12 @@ services:
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
     networks:
-      - odins-ai-network
+      - odins-eye-network
 
   # Nginx reverse proxy
   nginx:
     image: nginx:alpine
-    container_name: odins-ai-nginx
+    container_name: odins-eye-nginx
     restart: unless-stopped
     ports:
       - "80:80"
@@ -134,22 +134,22 @@ services:
       - ./config/nginx.conf:/etc/nginx/nginx.conf
       - ./config/ssl:/etc/nginx/ssl
     depends_on:
-      - odins-ai
+      - odins-eye
     networks:
-      - odins-ai-network
+      - odins-eye-network
 
   # Jupyter Lab for development
   jupyter:
     image: nvcr.io/nvidia/tensorflow:25.02-tf2-py3
-    container_name: odins-ai-jupyter
+    container_name: odins-eye-jupyter
     restart: unless-stopped
     ports:
       - "8888:8888"
     volumes:
-      - odins-ai-data:/workspace
+      - odins-eye-data:/workspace
       - ai-models:/opt/ai/models
       - huggingface-cache:/opt/ai/huggingface
-      - logs:/var/log/odins-ai
+      - logs:/var/log/odins-eye
       - /var/run/docker.sock:/var/run/docker.sock:ro
     group_add:
       - "988"
@@ -170,12 +170,12 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities: [ gpu ]
     networks:
-      - odins-ai-network
+      - odins-eye-network
 
 volumes:
-  odins-ai-data:
+  odins-eye-data:
     driver: local
   ai-models:
     driver: local
@@ -197,5 +197,5 @@ volumes:
     driver: local
 
 networks:
-  odins-ai-network:
-    driver: bridge 
+  odins-eye-network:
+    driver: bridge

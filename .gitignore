@@ -1,4 +1,4 @@
-# Odin's AI Platform - .gitignore
+# Odin's Eye Platform - .gitignore
 
 # Data and logs
 data/
@@ -42,6 +42,7 @@ build/
 dist/
 *.tar.gz
 *.zip
+release/
 
 # Python
 __pycache__/
@@ -53,6 +54,7 @@ venv/
 env/
 .venv/
 .env/
+.mypy_cache
 
 # Node.js (if any)
 node_modules/

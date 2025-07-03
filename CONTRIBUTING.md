@@ -1,6 +1,6 @@
-# Contributing to Odin's AI Platform
+# Contributing to Odin's Eye Platform
 
-Thank you for your interest in contributing to the Odin's AI Platform! This document provides guidelines for contributing.
+Thank you for your interest in contributing to the Odin's Eye Platform! This document provides guidelines for contributing.
 
 ## How to Contribute
 
@@ -34,8 +34,8 @@ Thank you for your interest in contributing to the Odin's AI Platform! This docu
 ### Local Development
 ```bash
 # Clone your fork
-git clone https://github.com/your-username/odins-ai-platform.git
-cd odins-ai-platform
+git clone https://github.com/your-username/odins-eye.git
+cd odins-eye
 
 # Deploy the platform
 ./deploy.sh
@@ -107,4 +107,4 @@ cd odins-ai-platform
 - Discussions: For questions and general help
 - Discord: For real-time community support
 
-Thank you for contributing to the Odin's AI Platform community!
+Thank you for contributing to the Odin's Eye Platform community!
