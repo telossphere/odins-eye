@@ -1,0 +1,19 @@
+{
+  "include": [
+    "app"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__"
+  ],
+  "ignore": [],
+  "defineConstant": {},
+  "typeCheckingMode": "off",
+  "useLibraryCodeForTypes": true,
+  "reportMissingImports": false,
+  "reportMissingTypeStubs": false,
+  "reportMissingModuleSource": false,
+  "reportGeneralTypeIssues": false,
+  "pythonVersion": "3.11",
+  "pythonPlatform": "Linux"
+}

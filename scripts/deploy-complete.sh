@@ -81,39 +81,39 @@ print_section() {
 # Function to run host deployment
 run_host_deployment() {
     print_section "Phase 1: Host System Deployment"
-    
+
     log "INFO" "Starting host system deployment..."
-    
+
     # Check if we need to run the host deployment
     if [[ -f "$INSTALL_DIR/deployment-summary.txt" ]]; then
         log "INFO" "Host deployment already completed, checking for missing components..."
-        
+
         # Check if critical components are missing
         local missing_components=false
-        
+
         # Check for CUDA toolkit
         if ! command -v nvcc >/dev/null 2>&1; then
             log "WARN" "CUDA toolkit (nvcc) not found"
             missing_components=true
         fi
-        
+
         # Check for AI libraries
         if ! python3 -c "import torch" 2>/dev/null; then
             log "WARN" "PyTorch not found"
             missing_components=true
         fi
-        
+
         if ! python3 -c "import tensorflow" 2>/dev/null; then
             log "WARN" "TensorFlow not found"
             missing_components=true
         fi
-        
+
         # Check for AI directories
         if [[ ! -d "/opt/ai/models" ]] || [[ ! -d "/opt/ai/huggingface" ]]; then
             log "WARN" "AI directories missing"
             missing_components=true
         fi
-        
+
         if [[ "$missing_components" == "true" ]]; then
             log "INFO" "Missing components detected, running host deployment..."
             echo -e "${YELLOW}⚠️  Missing components detected. Running host deployment...${NC}"
@@ -124,15 +124,15 @@ run_host_deployment() {
             return 0
         fi
     fi
-    
+
     # Run the host deployment script
     if [[ -f "$SCRIPT_DIR/deploy.sh" ]]; then
         log "INFO" "Running host deployment script..."
         echo -e "${BLUE}🔄 Running host system deployment...${NC}"
-        
+
         # Set environment variable to skip reboots during complete deployment
         export SKIP_REBOOT=true
-        
+
         if bash "$SCRIPT_DIR/deploy.sh"; then
             log "INFO" "Host deployment completed successfully"
             echo -e "${GREEN}✅ Host system deployment completed!${NC}"
@@ -146,24 +146,24 @@ run_host_deployment() {
         echo -e "${RED}❌ Host deployment script not found${NC}"
         return 1
     fi
-    
+
     echo
 }
 
 # Function to check and configure networking
 check_networking() {
     print_section "Phase 1.5: Network Configuration Check"
-    
+
     log "INFO" "Checking network configuration..."
     echo -e "${BLUE}🔄 Checking network configuration...${NC}"
-    
+
     # Check if we have an IP address
     local ip_address=$(hostname -I | awk '{print $1}')
-    
+
     if [[ -n "$ip_address" && "$ip_address" != "127.0.0.1" ]]; then
         log "INFO" "Network configured with IP: $ip_address"
         echo -e "${GREEN}✅ Network configured: $ip_address${NC}"
-        
+
         # Test internet connectivity
         if curl -s --max-time 10 https://google.com >/dev/null; then
             log "INFO" "Internet connectivity confirmed"
@@ -177,16 +177,16 @@ check_networking() {
         log "WARN" "No IP address assigned"
         echo -e "${YELLOW}⚠️  No IP address assigned${NC}"
     fi
-    
+
     # If we don't have proper networking, try to configure it
     if uname -r | grep -q '6\.11'; then
         log "INFO" "Attempting to configure network interfaces..."
         echo -e "${BLUE}🔄 Attempting to configure network interfaces...${NC}"
-        
+
         # Find the active network interface that has an IP address
         local active_interface=""
         local primary_interface=""
-        
+
         # First, check if any interface already has an IP
         active_interface=$(ip route get 8.8.8.8 2>/dev/null | grep -oP 'dev \K\S+' | head -1)
         if [[ -n "$active_interface" ]]; then
@@ -194,7 +194,7 @@ check_networking() {
             echo -e "${GREEN}✅ Network already configured: $active_interface${NC}"
             return 0
         fi
-        
+
         # If no active interface, find the primary ethernet interface
         # Check for common interface names in order of preference
         for interface in enp7s0 enp6s0 enp5s0 enp4s0 enp3s0 enp2s0 enp1s0 enp0s0; do
@@ -204,7 +204,7 @@ check_networking() {
                 break
             fi
         done
-        
+
         # If no specific interface found, use the first ethernet interface
         if [[ -z "$primary_interface" ]]; then
             primary_interface=$(ip link show | grep -E '^[0-9]+: en' | head -1 | cut -d: -f2 | xargs)
@@ -216,19 +216,19 @@ check_networking() {
                 return 1
             fi
         fi
-        
+
         # Check if the interface is already configured
         if ip addr show "$primary_interface" | grep -q "inet "; then
             log "INFO" "Interface $primary_interface already has an IP address"
             echo -e "${GREEN}✅ Interface $primary_interface already configured${NC}"
             return 0
         fi
-        
+
         # Create Netplan configuration
         local netplan_file="/etc/netplan/01-${primary_interface}.yaml"
-        
+
         log "INFO" "Creating Netplan configuration for $primary_interface..."
-        
+
         cat > "$netplan_file" <<EOF
 network:
   version: 2
@@ -238,25 +238,25 @@ network:
       dhcp6: true
       optional: true
 EOF
-        
+
         # Set proper permissions (Netplan requires root-only access)
         chmod 600 "$netplan_file"
-        
+
         # Apply the Netplan configuration
         log "INFO" "Applying Netplan configuration..."
         if netplan apply; then
             log "INFO" "Netplan configuration applied successfully"
-            
+
             # Wait a moment for DHCP to get an IP
             log "INFO" "Waiting for DHCP to assign IP address..."
             sleep 10
-            
+
             # Check if we got an IP address
             local new_ip_address=$(hostname -I | awk '{print $1}')
             if [[ -n "$new_ip_address" && "$new_ip_address" != "127.0.0.1" ]]; then
                 log "INFO" "Network configured successfully. IP address: $new_ip_address"
                 echo -e "${GREEN}✅ Network configured: $primary_interface -> $new_ip_address${NC}"
-                
+
                 # Test internet connectivity
                 if curl -s --max-time 10 https://google.com >/dev/null; then
                     log "INFO" "Internet connectivity confirmed"
@@ -279,22 +279,22 @@ EOF
         log "INFO" "Not running OEM kernel, network configuration may not be needed"
         echo -e "${YELLOW}⚠️  Not running OEM kernel. Network may need manual configuration.${NC}"
     fi
-    
+
     echo
 }
 
 # Function to setup system user
 setup_system_user() {
     print_section "Phase 1.6: System User Setup"
-    
+
     log "INFO" "Setting up system user..."
     echo -e "${BLUE}🔄 Setting up system user...${NC}"
-    
+
     # Create system user if it doesn't exist
     if ! id "$SYSTEM_USER" >/dev/null 2>&1; then
         log "INFO" "Creating system user: $SYSTEM_USER"
         useradd -m -s /bin/bash "$SYSTEM_USER"
-        
+
         # Set up SSH key if available
         if [[ -f "/root/.ssh/authorized_keys" ]]; then
             mkdir -p "/home/$SYSTEM_USER/.ssh"
@@ -304,7 +304,7 @@ setup_system_user() {
             chmod 600 "/home/$SYSTEM_USER/.ssh/authorized_keys"
             log "INFO" "SSH keys copied to $SYSTEM_USER"
         fi
-        
+
         # Add user to sudo group
         usermod -aG sudo "$SYSTEM_USER"
         log "INFO" "User $SYSTEM_USER created and added to sudo group"
@@ -313,7 +313,7 @@ setup_system_user() {
         log "INFO" "User $SYSTEM_USER already exists"
         echo -e "${GREEN}✅ User $SYSTEM_USER already exists${NC}"
     fi
-    
+
     # Ensure user is in docker group
     if ! groups "$SYSTEM_USER" | grep -q docker; then
         log "INFO" "Adding $SYSTEM_USER to docker group"
@@ -323,32 +323,32 @@ setup_system_user() {
         log "INFO" "User $SYSTEM_USER already in docker group"
         echo -e "${GREEN}✅ User $SYSTEM_USER already in docker group${NC}"
     fi
-    
+
     echo
 }
 
 # Function to wait for Docker to be ready
 wait_for_docker() {
     print_section "Phase 2: Docker Service Check"
-    
+
     log "INFO" "Waiting for Docker service to be ready..."
     echo -e "${BLUE}🔄 Waiting for Docker service...${NC}"
-    
+
     local max_attempts=30
     local attempt=1
-    
+
     while [[ $attempt -le $max_attempts ]]; do
         if systemctl is-active docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
             log "INFO" "Docker service is ready"
             echo -e "${GREEN}✅ Docker service is ready!${NC}"
             return 0
         fi
-        
+
         echo -e "${YELLOW}⏳ Waiting for Docker... (attempt $attempt/$max_attempts)${NC}"
         sleep 2
         ((attempt++))
     done
-    
+
     log "ERROR" "Docker service failed to start within timeout"
     echo -e "${RED}❌ Docker service failed to start${NC}"
     return 1
@@ -357,10 +357,10 @@ wait_for_docker() {
 # Function to verify Docker GPU support
 verify_docker_gpu() {
     print_section "Phase 3: Docker GPU Verification"
-    
+
     log "INFO" "Verifying Docker GPU support..."
     echo -e "${BLUE}🔄 Verifying Docker GPU support...${NC}"
-    
+
     if docker run --rm --runtime=nvidia --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi >/dev/null 2>&1; then
         log "INFO" "Docker GPU support verified"
         echo -e "${GREEN}✅ Docker GPU support verified!${NC}"
@@ -376,7 +376,7 @@ verify_docker_gpu() {
 # Function to verify Docker Compose installation
 verify_docker_compose() {
     log "INFO" "Verifying Docker Compose installation..."
-    
+
     # Check if docker compose works
     if docker compose version >/dev/null 2>&1; then
         log "INFO" "Docker Compose v2 verified"
@@ -396,39 +396,39 @@ verify_docker_compose() {
 # Function to setup Docker Compose
 setup_docker_compose() {
     print_section "Phase 4: Docker Compose Setup"
-    
+
     log "INFO" "Setting up Docker Compose..."
     echo -e "${BLUE}🔄 Setting up Docker Compose...${NC}"
-    
+
     # Check if Docker Compose is already installed
     if docker compose version >/dev/null 2>&1; then
         log "INFO" "Docker Compose already installed"
         echo -e "${GREEN}✅ Docker Compose already installed${NC}"
         return 0
     fi
-    
+
     # Install Docker Compose for the system user
     log "INFO" "Installing Docker Compose..."
-    
+
     # Create directory for Docker Compose
     mkdir -p "/home/$SYSTEM_USER/.docker/cli-plugins"
-    
+
     # Download Docker Compose
     curl -SL "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-linux-x86_64" \
         -o "/home/$SYSTEM_USER/.docker/cli-plugins/docker-compose"
-    
+
     # Set permissions
     chmod +x "/home/$SYSTEM_USER/.docker/cli-plugins/docker-compose"
     chown -R "$SYSTEM_USER:$SYSTEM_USER" "/home/$SYSTEM_USER/.docker"
-    
+
     # Also install system-wide
     curl -SL "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-linux-x86_64" \
         -o "/usr/local/bin/docker-compose"
     chmod +x "/usr/local/bin/docker-compose"
-    
+
     # Create symlink for docker compose (v2 syntax)
     ln -sf /usr/local/bin/docker-compose /usr/local/bin/docker-compose-v2
-    
+
     # Verify installation
     if docker compose version >/dev/null 2>&1; then
         log "INFO" "Docker Compose installed successfully"
@@ -443,13 +443,13 @@ setup_docker_compose() {
 # Function to create Docker configuration files
 create_docker_configs() {
     print_section "Phase 5: Docker Configuration"
-    
+
     log "INFO" "Creating Docker configuration files..."
     echo -e "${BLUE}🔄 Creating Docker configuration files...${NC}"
-    
+
     local docker_config_dir="$PROJECT_ROOT/docker/config"
     mkdir -p "$docker_config_dir"
-    
+
     # Create Prometheus configuration
     cat > "$docker_config_dir/prometheus.yml" <<'EOF'
 global:
@@ -563,34 +563,34 @@ EOF
 # Function to check port availability
 check_port_availability() {
     print_section "Phase 5.5: Port Availability Check"
-    
+
     log "INFO" "Checking port availability..."
     echo -e "${BLUE}🔄 Checking port availability...${NC}"
-    
+
     local ports=("80" "443" "8080" "3001" "3002" "3003" "3004" "7860" "8888" "9090" "5432" "6379" "9100")
     local conflicts=()
     local docker_services=()
     local system_services=()
-    
+
     for port in "${ports[@]}"; do
         local port_in_use=false
         local is_docker_service=false
         local is_system_service=false
-        
+
         # Check if port is in use
         if netstat -tlnp 2>/dev/null | grep -q ":$port "; then
             port_in_use=true
             conflicts+=("$port")
-            
+
             # Get process info for the port
             local port_info=$(netstat -tlnp 2>/dev/null | grep ":$port " | head -1)
             local process_info=""
-            
+
             if [[ -n "$port_info" ]]; then
                 # Extract process ID and name
                 local process_pid=$(echo "$port_info" | awk '{print $7}' | cut -d'/' -f1)
                 local process_name=$(echo "$port_info" | awk '{print $7}' | cut -d'/' -f2)
-                
+
                 if [[ -n "$process_pid" && "$process_pid" != "-" ]]; then
                     # Check if it's a Docker-related process
                     if [[ "$process_name" == "docker" ]] || \
@@ -620,7 +620,7 @@ check_port_availability() {
                     fi
                 fi
             fi
-            
+
             # Also check Docker containers using this port
             if [[ "$is_docker_service" == "false" && "$is_system_service" == "false" ]]; then
                 if docker ps --format "{{.Names}}" 2>/dev/null | while read -r container; do
@@ -633,7 +633,7 @@ check_port_availability() {
                     :
                 fi
             fi
-            
+
             # Categorize the conflict
             if [[ "$is_docker_service" == "true" ]]; then
                 docker_services+=("$port")
@@ -652,23 +652,23 @@ check_port_availability() {
             echo -e "${GREEN}✅ Port $port is available${NC}"
         fi
     done
-    
+
     # Summary
     if [[ ${#conflicts[@]} -gt 0 ]]; then
         local docker_count=${#docker_services[@]}
         local system_count=${#system_services[@]}
         local unknown_count=$(( ${#conflicts[@]} - docker_count - system_count ))
-        
+
         if [[ $docker_count -gt 0 ]]; then
             log "INFO" "Docker services using ports: ${docker_services[*]}"
             echo -e "${BLUE}ℹ️  Docker services using ports: ${docker_services[*]}${NC}"
         fi
-        
+
         if [[ $system_count -gt 0 ]]; then
             log "INFO" "System services using ports: ${system_services[*]}"
             echo -e "${BLUE}ℹ️  System services using ports: ${system_services[*]}${NC}"
         fi
-        
+
         if [[ $unknown_count -gt 0 ]]; then
             log "WARN" "Unknown processes using ports: ${conflicts[*]}"
             echo -e "${YELLOW}⚠️  Unknown processes using ports: ${conflicts[*]}${NC}"
@@ -682,23 +682,23 @@ check_port_availability() {
         log "INFO" "All ports are available"
         echo -e "${GREEN}✅ All ports are available${NC}"
     fi
-    
+
     echo
 }
 
 # Function to clean up conflicting Docker services
 cleanup_conflicting_services() {
     print_section "Phase 5.6: Cleanup Conflicting Services"
-    
+
     log "INFO" "Cleaning up conflicting Docker services..."
     echo -e "${BLUE}🔄 Cleaning up conflicting Docker services...${NC}"
-    
+
     local docker_dir="$PROJECT_ROOT/docker"
-    
+
     # Check if we're in a Docker Compose project
     if [[ -f "$docker_dir/docker-compose.yml" ]]; then
         cd "$docker_dir"
-        
+
         # Stop any existing services from this project
         log "INFO" "Stopping existing Docker Compose services..."
         if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
@@ -708,14 +708,14 @@ cleanup_conflicting_services() {
             docker-compose down 2>/dev/null || true
             log "INFO" "Stopped existing services with docker-compose"
         fi
-        
+
         cd "$PROJECT_ROOT"
     fi
-    
+
     # Stop any containers that might be using our ports
     local ports=("80" "443" "8080" "3001" "3002" "3003" "3004" "7860" "8888" "9090" "5432" "6379" "9100")
     local stopped_containers=()
-    
+
     for port in "${ports[@]}"; do
         # Find containers using this port
         local containers_using_port=$(docker ps --format "{{.Names}}" 2>/dev/null | while read -r container; do
@@ -723,7 +723,7 @@ cleanup_conflicting_services() {
                 echo "$container"
             fi
         done)
-        
+
         if [[ -n "$containers_using_port" ]]; then
             echo "$containers_using_port" | while read -r container; do
                 if [[ -n "$container" ]]; then
@@ -734,7 +734,7 @@ cleanup_conflicting_services() {
             done
         fi
     done
-    
+
     if [[ ${#stopped_containers[@]} -gt 0 ]]; then
         log "INFO" "Stopped ${#stopped_containers[@]} conflicting containers"
         echo -e "${GREEN}✅ Stopped ${#stopped_containers[@]} conflicting containers${NC}"
@@ -742,46 +742,46 @@ cleanup_conflicting_services() {
         log "INFO" "No conflicting containers found"
         echo -e "${GREEN}✅ No conflicting containers found${NC}"
     fi
-    
+
     # Wait a moment for ports to be released
     sleep 2
-    
+
     echo
 }
 
 # Function to deploy Docker services
 deploy_docker_services() {
     print_section "Phase 6: Docker Services Deployment"
-    
+
     if [[ "$SKIP_DOCKER_SERVICES" == "true" ]]; then
         log "INFO" "Skipping Docker services deployment"
         echo -e "${YELLOW}⚠️  Skipping Docker services deployment${NC}"
         return 0
     fi
-    
+
     log "INFO" "Deploying Docker services..."
     echo -e "${BLUE}🔄 Deploying Docker services...${NC}"
-    
+
     local docker_dir="$PROJECT_ROOT/docker"
-    
+
     # Check if Docker Compose file exists
     if [[ ! -f "$docker_dir/docker-compose.yml" ]]; then
         log "ERROR" "Docker Compose file not found: $docker_dir/docker-compose.yml"
         echo -e "${RED}❌ Docker Compose file not found${NC}"
         return 1
     fi
-    
+
     # Change to Docker directory
     cd "$docker_dir"
-    
+
     # Set environment variables for Docker Compose
     export POSTGRES_PASSWORD="odins_ai_secure_password_$(date +%s)"
     export GRAFANA_PASSWORD="admin"
-    
+
     # Pull images first
     log "INFO" "Pulling Docker images..."
     echo -e "${BLUE}🔄 Pulling Docker images...${NC}"
-    
+
     # Try docker compose first, fallback to docker-compose
     if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
         if docker compose pull; then
@@ -804,64 +804,64 @@ deploy_docker_services() {
         echo -e "${RED}❌ Docker Compose not found. Please install Docker Compose first.${NC}"
         return 1
     fi
-    
+
     # Start services
     log "INFO" "Starting Docker services..."
     echo -e "${BLUE}🔄 Starting Docker services...${NC}"
-    
+
     # Try docker compose first, fallback to docker-compose
     if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
         # Stop existing services first (idempotent)
         log "INFO" "Stopping existing services..."
         docker compose down 2>/dev/null || true
-        
+
         if docker compose up -d; then
             log "INFO" "Docker services started successfully"
             echo -e "${GREEN}✅ Docker services started!${NC}"
-            
+
             # Wait for services to be ready
             log "INFO" "Waiting for services to be ready..."
             echo -e "${BLUE}🔄 Waiting for services to be ready...${NC}"
             sleep 10
-            
+
             # Show service status
             docker compose ps
-            
+
         else
             log "ERROR" "Failed to start Docker services with docker compose"
             echo -e "${RED}❌ Failed to start Docker services${NC}"
             return 1
         fi
-        
+
     elif command -v docker-compose >/dev/null 2>&1; then
         # Stop existing services first (idempotent)
         log "INFO" "Stopping existing services..."
         docker-compose down 2>/dev/null || true
-        
+
         if docker-compose up -d; then
             log "INFO" "Docker services started successfully (using docker-compose)"
             echo -e "${GREEN}✅ Docker services started!${NC}"
-            
+
             # Wait for services to be ready
             log "INFO" "Waiting for services to be ready..."
             echo -e "${BLUE}🔄 Waiting for services to be ready...${NC}"
             sleep 10
-            
+
             # Show service status
             docker-compose ps
-            
+
         else
             log "ERROR" "Failed to start Docker services with docker-compose"
             echo -e "${RED}❌ Failed to start Docker services${NC}"
             return 1
         fi
-        
+
     else
         log "ERROR" "Neither docker compose nor docker-compose found"
         echo -e "${RED}❌ Docker Compose not found. Please install Docker Compose first.${NC}"
         return 1
     fi
-    
+
     # Return to original directory
     cd "$PROJECT_ROOT"
 }
@@ -869,15 +869,15 @@ deploy_docker_services() {
 # Function to create service access information
 create_access_info() {
     print_section "Phase 7: Service Access Information"
-    
+
     log "INFO" "Creating service access information..."
-    
+
     local access_file="$INSTALL_DIR/service-access.txt"
-    
+
     # Get server IP addresses
     local local_ip=$(hostname -I | awk '{print $1}')
     local public_ip=$(curl -s --max-time 5 https://ipinfo.io/ip 2>/dev/null || echo "Not available")
-    
+
     cat > "$access_file" <<EOF
 Odin AI Complete Deployment - Service Access
 ============================================
@@ -937,15 +937,15 @@ Deployment completed: $(date)
 EOF
 
     chown "$SYSTEM_USER:$SYSTEM_USER" "$access_file"
-    
+
     log "INFO" "Service access information created"
     echo -e "${GREEN}✅ Service access information created!${NC}"
-    
+
     # Display access information
     echo
     echo -e "${CYAN}📋 Service Access Information:${NC}"
     cat "$access_file"
-    
+
     # Display remote access instructions
     echo
     echo -e "${YELLOW}🌍 Remote Access Instructions:${NC}"
@@ -963,10 +963,10 @@ EOF
 # Function to run verification
 run_verification() {
     print_section "Phase 8: Final Verification"
-    
+
     log "INFO" "Running final verification..."
     echo -e "${BLUE}🔄 Running final verification...${NC}"
-    
+
     # Run the verification script
     if [[ -f "$SCRIPT_DIR/verify.sh" ]]; then
         if bash "$SCRIPT_DIR/verify.sh"; then
@@ -980,21 +980,21 @@ run_verification() {
         log "WARN" "Verification script not found"
         echo -e "${YELLOW}⚠️  Verification script not found${NC}"
     fi
-    
+
     echo
 }
 
 # Function to run Jupyter GPU verification
 run_jupyter_verification() {
     print_section "Phase 8.5: Jupyter GPU Verification"
-    
+
     log "INFO" "Running Jupyter GPU verification..."
     echo -e "${BLUE}🧪 Running Jupyter GPU verification tests...${NC}"
-    
+
     # Wait longer for Jupyter to fully start and install PyTorch
     echo -e "${BLUE}⏳ Waiting for Jupyter to fully initialize and install PyTorch...${NC}"
     sleep 60  # Increased from 30 to 60 seconds
-    
+
     # Run the Jupyter verification script
     if [[ -f "$SCRIPT_DIR/verify-jupyter.sh" ]]; then
         if bash "$SCRIPT_DIR/verify-jupyter.sh"; then
@@ -1009,7 +1009,7 @@ run_jupyter_verification() {
         log "WARN" "Jupyter verification script not found"
         echo -e "${YELLOW}⚠️  Jupyter verification script not found${NC}"
     fi
-    
+
     echo
 }
 
@@ -1017,7 +1017,7 @@ run_jupyter_verification() {
 print_completion() {
     # Get server IP for display
     local local_ip=$(hostname -I | awk '{print $1}')
-    
+
     echo -e "${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${CYAN}║                    🎉 DEPLOYMENT COMPLETE! 🎉                ║${NC}"
     echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}"
@@ -1056,13 +1056,13 @@ print_completion() {
 main() {
     check_root
     print_header
-    
+
     log "INFO" "Starting complete Odin AI deployment..."
     log "INFO" "Log file: $LOG_FILE"
-    
+
     # Create log directory
     mkdir -p "$(dirname "$LOG_FILE")"
-    
+
     # Run deployment phases
     run_host_deployment
     check_networking
@@ -1078,10 +1078,10 @@ main() {
     create_access_info
     run_verification
     run_jupyter_verification
-    
+
     log "INFO" "Complete deployment finished successfully"
     print_completion
 }
 
 # Run main function
-main "$@" 
+main "$@"

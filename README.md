@@ -218,6 +218,40 @@ sudo ./scripts/troubleshoot.sh
 - Always run `verify-services.sh` from the `docker` directory.
 - For best results, ensure all containers are healthy and endpoints are accessible as shown in the verification scripts.
 
+## 🛠️ Developer Experience (DX)
+
+### Setup Development Tools
+```bash
+./scripts/setup-dx.sh
+```
+
+This installs:
+- **Python tools**: Black (formatter), isort (import sorter), flake8 (linter), mypy (type checker)
+- **System tools**: ShellCheck (shell script linter), Hadolint (Dockerfile linter)
+- **Git hooks**: Pre-commit hooks for automatic formatting and linting
+
+### Available Commands
+```bash
+# Format and lint Python code
+black .                    # Format code
+isort .                    # Sort imports
+flake8 .                   # Lint code
+mypy .                     # Type check
+
+# Lint other files
+shellcheck scripts/*.sh    # Lint shell scripts
+hadolint docker/Dockerfile # Lint Dockerfile
+
+# Run all checks
+pre-commit run --all-files # Run all pre-commit hooks
+```
+
+### VS Code Integration
+The workspace includes:
+- **Recommended extensions** (auto-installed in remote SSH)
+- **Workspace settings** for consistent formatting
+- **EditorConfig** for cross-editor consistency
+
 ## 🤝 Contributing
 
 1. Fork the repository

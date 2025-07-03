@@ -21,7 +21,7 @@ test_service() {
     local service_name=$1
     local test_command=$2
     local description=$3
-    
+
     echo -n "Testing $service_name... "
     if eval "$test_command" >/dev/null 2>&1; then
         echo -e "${GREEN}✅ PASS${NC}"
@@ -39,7 +39,7 @@ test_web_service() {
     local service_name=$1
     local url=$2
     local description=$3
-    
+
     echo -n "Testing $service_name... "
     if curl -s -f "$url" >/dev/null 2>&1; then
         echo -e "${GREEN}✅ PASS${NC}"
@@ -106,4 +106,4 @@ echo "  Node Exporter:  http://localhost:9100"
 
 echo
 echo -e "${GREEN}🎉 Service verification complete!${NC}"
-echo "All services should be accessible via the URLs above." 
+echo "All services should be accessible via the URLs above."

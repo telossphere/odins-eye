@@ -37,12 +37,12 @@ check_root() {
 # Function to install CUDA toolkit
 install_cuda() {
     echo -e "${BLUE}🔄 Installing CUDA toolkit...${NC}"
-    
+
     if ! command -v nvcc >/dev/null 2>&1; then
         apt update
         if apt install -y cuda-toolkit-12-9; then
             echo -e "${GREEN}✅ CUDA toolkit installed${NC}"
-            
+
             # Set up CUDA environment variables
             if ! grep -q "CUDA_HOME" /etc/environment; then
                 echo "CUDA_HOME=/usr/local/cuda-12.9" >> /etc/environment
@@ -50,11 +50,11 @@ install_cuda() {
                 echo "LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-12.9/lib64" >> /etc/environment
                 echo -e "${GREEN}✅ CUDA environment variables configured${NC}"
             fi
-            
+
             # Create symlinks for easier access
             ln -sf /usr/local/cuda-12.9/bin/nvcc /usr/local/bin/nvcc
             ln -sf /usr/local/cuda-12.9/bin/nvidia-smi /usr/local/bin/nvidia-smi
-            
+
             echo -e "${GREEN}✅ CUDA toolkit setup complete${NC}"
         else
             echo -e "${RED}❌ Failed to install CUDA toolkit${NC}"
@@ -68,7 +68,7 @@ install_cuda() {
 # Function to create AI directories
 create_ai_directories() {
     echo -e "${BLUE}🔄 Creating AI directories...${NC}"
-    
+
     local ai_dirs=(
         "/opt/ai"
         "/opt/ai/models"
@@ -76,7 +76,7 @@ create_ai_directories() {
         "/opt/ai/transformers"
         "/opt/ai/datasets"
     )
-    
+
     for dir in "${ai_dirs[@]}"; do
         if [[ ! -d "$dir" ]]; then
             mkdir -p "$dir"
@@ -91,13 +91,13 @@ create_ai_directories() {
 # Function to install AI libraries
 install_ai_libraries() {
     echo -e "${BLUE}🔄 Installing AI libraries...${NC}"
-    
+
     # Add user's local bin to PATH
     if ! grep -q ".local/bin" "/home/$SYSTEM_USER/.bashrc"; then
         echo 'export PATH="$HOME/.local/bin:$PATH"' >> "/home/$SYSTEM_USER/.bashrc"
         echo -e "${GREEN}✅ Added .local/bin to PATH${NC}"
     fi
-    
+
     # Install PyTorch with CUDA support
     if ! python3 -c "import torch" 2>/dev/null; then
         echo -e "${BLUE}🔄 Installing PyTorch...${NC}"
@@ -106,7 +106,7 @@ install_ai_libraries() {
     else
         echo -e "${GREEN}✅ PyTorch already installed${NC}"
     fi
-    
+
     # Install TensorFlow
     if ! python3 -c "import tensorflow" 2>/dev/null; then
         echo -e "${BLUE}🔄 Installing TensorFlow...${NC}"
@@ -115,7 +115,7 @@ install_ai_libraries() {
     else
         echo -e "${GREEN}✅ TensorFlow already installed${NC}"
     fi
-    
+
     # Install other AI libraries
     local ai_libraries=(
         "transformers"
@@ -131,7 +131,7 @@ install_ai_libraries() {
         "jupyter"
         "ipywidgets"
     )
-    
+
     for lib in "${ai_libraries[@]}"; do
         if ! python3 -c "import $lib" 2>/dev/null; then
             echo -e "${BLUE}🔄 Installing $lib...${NC}"
@@ -146,10 +146,10 @@ install_ai_libraries() {
 # Function to set CPU performance mode
 set_performance_mode() {
     echo -e "${BLUE}🔄 Setting CPU performance mode...${NC}"
-    
+
     if [[ -f /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]]; then
         echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor >/dev/null 2>&1
-        
+
         # Make it persistent across reboots
         if ! grep -q "cpufreq" /etc/default/grub; then
             sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="cpufreq.default_governor=performance /' /etc/default/grub
@@ -164,15 +164,15 @@ set_performance_mode() {
 # Main function
 main() {
     check_root
-    
+
     install_cuda
     create_ai_directories
     install_ai_libraries
     set_performance_mode
-    
+
     echo -e "${GREEN}🎉 All missing components fixed!${NC}"
     echo -e "${BLUE}💡 Run './scripts/verify.sh' to check the results${NC}"
 }
 
 # Run main function
-main "$@" 
+main "$@"

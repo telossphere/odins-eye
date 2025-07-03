@@ -50,7 +50,7 @@ print_section() {
 # Check system information
 check_system_info() {
     print_section "System Information"
-    
+
     echo -e "Hostname: ${STATUS_INFO} $(hostname)"
     echo -e "OS: ${STATUS_INFO} $(grep PRETTY_NAME /etc/os-release | cut -d'"' -f2)"
     echo -e "Kernel: ${STATUS_INFO} $(uname -r)"
@@ -63,23 +63,23 @@ check_system_info() {
 # Check hardware information
 check_hardware_info() {
     print_section "Hardware Information"
-    
+
     # CPU
     local cpu_cores=$(nproc)
     local cpu_model=$(grep "model name" /proc/cpuinfo | head -1 | cut -d':' -f2 | xargs)
     echo -e "CPU: ${STATUS_INFO} $cpu_model ($cpu_cores cores)"
-    
+
     # Memory
     local mem_total=$(free -h | awk '/^Mem:/{print $2}')
     local mem_used=$(free -h | awk '/^Mem:/{print $3}')
     local mem_available=$(free -h | awk '/^Mem:/{print $7}')
     echo -e "Memory: ${STATUS_INFO} $mem_used / $mem_total (Available: $mem_available)"
-    
+
     # Disk
     local disk_usage=$(df -h / | awk 'NR==2{print $5}')
     local disk_available=$(df -h / | awk 'NR==2{print $4}')
     echo -e "Disk: ${STATUS_INFO} $disk_usage used (Available: $disk_available)"
-    
+
     # GPU
     if command -v nvidia-smi >/dev/null 2>&1; then
         local gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader,nounits | head -1)
@@ -95,7 +95,7 @@ check_hardware_info() {
 # Check service status
 check_services() {
     print_section "Service Status"
-    
+
     local services=(
         "docker:Docker"
         "ssh:SSH"
@@ -103,11 +103,11 @@ check_services() {
         "fail2ban:Fail2Ban"
         "nvidia-persistenced:NVIDIA Persistence"
     )
-    
+
     for service_info in "${services[@]}"; do
         local service_name="${service_info%%:*}"
         local display_name="${service_info##*:}"
-        
+
         if systemctl is-active "$service_name" >/dev/null 2>&1; then
             echo -e "$display_name: ${STATUS_OK} Active"
         else
@@ -120,19 +120,19 @@ check_services() {
 # Check Docker containers
 check_docker_containers() {
     print_section "Docker Containers"
-    
+
     if ! command -v docker >/dev/null 2>&1; then
         echo -e "Docker: ${STATUS_ERROR} Not installed"
         echo
         return
     fi
-    
+
     if ! systemctl is-active docker >/dev/null 2>&1; then
         echo -e "Docker: ${STATUS_ERROR} Service not running"
         echo
         return
     fi
-    
+
     local containers=$(docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}")
     if [[ -n "$containers" ]]; then
         echo "$containers"
@@ -145,18 +145,18 @@ check_docker_containers() {
 # Check network status
 check_network() {
     print_section "Network Status"
-    
+
     # Internet connectivity
     if curl -s --max-time 5 https://google.com >/dev/null; then
         echo -e "Internet: ${STATUS_OK} Connected"
     else
         echo -e "Internet: ${STATUS_ERROR} Disconnected"
     fi
-    
+
     # Local IP
     local local_ip=$(hostname -I | awk '{print $1}')
     echo -e "Local IP: ${STATUS_INFO} $local_ip"
-    
+
     # Open ports
     echo -e "Open ports:"
     local ports=(22 80 443 8080 3000 3001 3002 5432 6379 9090 9100 8888)
@@ -173,7 +173,7 @@ check_network() {
 # Check AI/ML environment
 check_ai_environment() {
     print_section "AI/ML Environment"
-    
+
     # Python
     if command -v python3 >/dev/null 2>&1; then
         local python_version=$(python3 --version)
@@ -181,7 +181,7 @@ check_ai_environment() {
     else
         echo -e "Python: ${STATUS_ERROR} Not installed"
     fi
-    
+
     # PyTorch
     if python3 -c "import torch" 2>/dev/null; then
         local torch_version=$(python3 -c "import torch; print(torch.__version__)")
@@ -195,7 +195,7 @@ check_ai_environment() {
     else
         echo -e "PyTorch: ${STATUS_WARN} Not installed"
     fi
-    
+
     # TensorFlow
     if python3 -c "import tensorflow" 2>/dev/null; then
         local tf_version=$(python3 -c "import tensorflow as tf; print(tf.__version__)")
@@ -203,7 +203,7 @@ check_ai_environment() {
     else
         echo -e "TensorFlow: ${STATUS_WARN} Not installed"
     fi
-    
+
     # CUDA
     if command -v nvcc >/dev/null 2>&1; then
         local cuda_version=$(nvcc --version | grep release | awk '{print $6}')
@@ -217,7 +217,7 @@ check_ai_environment() {
 # Check file system
 check_filesystem() {
     print_section "File System"
-    
+
     local dirs=(
         "$INSTALL_DIR:Installation Directory"
         "/var/log/odins-ai:Log Directory"
@@ -226,11 +226,11 @@ check_filesystem() {
         "/opt/ai/transformers:Transformers Cache"
         "/opt/ai/datasets:Datasets Cache"
     )
-    
+
     for dir_info in "${dirs[@]}"; do
         local dir_path="${dir_info%%:*}"
         local dir_name="${dir_info##*:}"
-        
+
         if [[ -d "$dir_path" ]]; then
             local dir_size=$(du -sh "$dir_path" 2>/dev/null | cut -f1)
             echo -e "$dir_name: ${STATUS_OK} Exists ($dir_size)"
@@ -244,19 +244,19 @@ check_filesystem() {
 # Check performance metrics
 check_performance() {
     print_section "Performance Metrics"
-    
+
     # CPU usage
     local cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
     echo -e "CPU Usage: ${STATUS_INFO} ${cpu_usage}%"
-    
+
     # Memory usage
     local mem_usage=$(free | awk '/^Mem:/{printf "%.1f", $3/$2*100}')
     echo -e "Memory Usage: ${STATUS_INFO} ${mem_usage}%"
-    
+
     # Disk usage
     local disk_usage=$(df / | awk 'NR==2{print $5}' | sed 's/%//')
     echo -e "Disk Usage: ${STATUS_INFO} ${disk_usage}%"
-    
+
     # GPU usage (if available)
     if command -v nvidia-smi >/dev/null 2>&1; then
         local gpu_util=$(nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | head -1)
@@ -264,7 +264,7 @@ check_performance() {
         echo -e "GPU Utilization: ${STATUS_INFO} ${gpu_util}%"
         echo -e "GPU Memory Utilization: ${STATUS_INFO} ${gpu_mem_util}%"
     fi
-    
+
     # Temperature (if available)
     if [[ -f /sys/class/thermal/thermal_zone0/temp ]]; then
         local temp=$(($(cat /sys/class/thermal/thermal_zone0/temp) / 1000))
@@ -276,34 +276,34 @@ check_performance() {
 # Check security status
 check_security() {
     print_section "Security Status"
-    
+
     # SSH configuration
     if grep -q "PasswordAuthentication no" /etc/ssh/sshd_config; then
         echo -e "SSH Password Auth: ${STATUS_OK} Disabled"
     else
         echo -e "SSH Password Auth: ${STATUS_WARN} Enabled"
     fi
-    
+
     if grep -q "PermitRootLogin no" /etc/ssh/sshd_config; then
         echo -e "SSH Root Login: ${STATUS_OK} Disabled"
     else
         echo -e "SSH Root Login: ${STATUS_WARN} Enabled"
     fi
-    
+
     # Firewall
     if ufw status | grep -q "Status: active"; then
         echo -e "Firewall: ${STATUS_OK} Active"
     else
         echo -e "Firewall: ${STATUS_ERROR} Inactive"
     fi
-    
+
     # Fail2Ban
     if systemctl is-active fail2ban >/dev/null 2>&1; then
         echo -e "Fail2Ban: ${STATUS_OK} Active"
     else
         echo -e "Fail2Ban: ${STATUS_ERROR} Inactive"
     fi
-    
+
     # Recent login attempts
     local failed_attempts=$(grep "Failed password" /var/log/auth.log | wc -l)
     echo -e "Failed Login Attempts (recent): ${STATUS_INFO} $failed_attempts"
@@ -313,14 +313,14 @@ check_security() {
 # Print summary
 print_summary() {
     print_section "System Summary"
-    
+
     local total_checks=0
     local passed_checks=0
     local failed_checks=0
-    
+
     # Count checks (simplified)
     total_checks=25  # Approximate number of checks
-    
+
     echo -e "System Status: ${STATUS_OK} Operational"
     echo -e "Last Check: $(date)"
     echo -e "Next Check: $(date -d '+5 minutes')"
@@ -345,4 +345,4 @@ main() {
 }
 
 # Run main function
-main "$@" 
+main "$@"

@@ -158,11 +158,11 @@
             .container {
                 padding: 10px;
             }
-            
+
             .header h1 {
                 font-size: 2rem;
             }
-            
+
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
@@ -449,7 +449,7 @@
                     <span class="metric-label">Containers</span>
                     <span class="metric-value">${data.containers.length} running</span>
                 </div>`;
-                
+
                 data.containers.forEach((container_info, index) => {
                     const statusClass = getStatusClass(container_info.status);
                     servicesHtml += `
@@ -504,4 +504,4 @@
         setInterval(refreshData, 30000);
     </script>
 </body>
-</html> 
+</html>
