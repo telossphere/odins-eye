@@ -3,11 +3,11 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "odins-ai-platform"
+name = "odins-eye-platform"
 version = "1.0.0"
 description = "A complete, production-ready AI/ML platform with GPU support, monitoring, and development tools"
 authors = [
-    {name = "Odin's AI Team", email = "team@odins-ai.com"}
+    {name = "Odin's Eye Team", email = "team@odins-eye.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.8"

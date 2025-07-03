@@ -41,18 +41,18 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
 # Create application user with correct UID/GID to match host
 RUN groupadd -g 988 docker && \
     useradd -m -s /bin/bash -u 1000 -g 988 odin && \
-    mkdir -p /opt/odins-ai /opt/ai/models /opt/ai/huggingface /var/log/odins-ai && \
-    chown -R odin:docker /opt/odins-ai /opt/ai /var/log/odins-ai
+    mkdir -p /opt/odins-eye /opt/ai/models /opt/ai/huggingface /var/log/odins-eye && \
+    chown -R odin:docker /opt/odins-eye /opt/ai /var/log/odins-eye
 
 # Set working directory
-WORKDIR /opt/odins-ai
+WORKDIR /opt/odins-eye
 
 # Copy application files
-COPY --chown=odin:odin . /opt/odins-ai/
+COPY --chown=odin:odin . /opt/odins-eye/
 
 # Create necessary directories and set permissions
-RUN mkdir -p /opt/odins-ai/{logs,config,models} && \
-    chown -R odin:docker /opt/odins-ai
+RUN mkdir -p /opt/odins-eye/{logs,config,models} && \
+    chown -R odin:docker /opt/odins-eye
 
 # Install additional Python dependencies for the AI application
 # Using the exact versions from the working deployment
