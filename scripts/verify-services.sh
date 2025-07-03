@@ -82,10 +82,10 @@ test_web_service "Prometheus" "http://localhost:9090" "Prometheus metrics"
 test_web_service "Node Exporter" "http://localhost:9100/metrics" "System metrics endpoint"
 
 # Test PostgreSQL
-test_service "PostgreSQL" "docker exec odins-ai-postgres psql -U odin -d odins_ai -c 'SELECT 1;'" "Database connection"
+test_service "PostgreSQL" "docker exec odins-eye-postgres psql -U odin -d odins_eye -c 'SELECT 1;'" "Database connection"
 
 # Test Redis
-test_service "Redis" "docker exec odins-ai-redis redis-cli ping" "Redis cache connection"
+test_service "Redis" "docker exec odins-eye-redis redis-cli ping" "Redis cache connection"
 
 # Test Nginx
 test_web_service "Nginx" "http://localhost:80" "Nginx reverse proxy"

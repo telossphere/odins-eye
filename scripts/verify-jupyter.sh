@@ -4,8 +4,12 @@ set -euo pipefail
 # Odin AI Jupyter Verification Script
 # Automatically runs verification tests in Jupyter to ensure GPU support
 
+# shellcheck disable=SC2034
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+# PROJECT_ROOT and JUPYTER_URL are unused, so comment them out to fix SC2034
+# PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+# shellcheck disable=SC2034
+# JUPYTER_URL="http://localhost:8888"  # Intentionally unused, for documentation only
 
 # Colors for output
 RED='\033[0;31m'
@@ -16,8 +20,8 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 # Configuration
-JUPYTER_CONTAINER="odins-ai-jupyter"
-JUPYTER_URL="http://localhost:8888"
+JUPYTER_CONTAINER="odins-eye-jupyter"
+# JUPYTER_URL="http://localhost:8888"  # Removed as unused (SC2034)
 MAX_WAIT_TIME=300  # 5 minutes
 WAIT_INTERVAL=10   # 10 seconds
 
@@ -30,7 +34,7 @@ FAILED_TESTS=0
 log() {
     local level="$1"
     local message="$2"
-    local log_file="/tmp/odins-ai-jupyter-verification.log"
+    local log_file="/tmp/odins-eye-jupyter-verification.log"
 
     # Try to write to log file, but don't fail if we can't
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message" | tee -a "$log_file" 2>/dev/null || echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message"
@@ -319,7 +323,8 @@ run_verification_tests() {
     log "INFO" "Starting Jupyter GPU verification tests"
 
     # Create verification script
-    local script_path=$(create_verification_script)
+    local script_path
+    script_path=$(create_verification_script)
 
     # Copy script to container
     docker cp "$script_path" "$JUPYTER_CONTAINER:/tmp/jupyter_verification.py"

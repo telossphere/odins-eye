@@ -70,7 +70,7 @@ test_containers() {
     cd ..
 
     # Test individual containers
-    local containers=("odins-ai" "odins-ai-jupyter" "odins-ai-grafana" "odins-ai-postgres" "odins-ai-redis" "odins-ai-prometheus" "odins-ai-node-exporter" "odins-ai-nginx")
+    local containers=("odins-eye" "odins-eye-jupyter" "odins-eye-grafana" "odins-eye-postgres" "odins-eye-redis" "odins-eye-prometheus" "odins-eye-node-exporter" "odins-eye-nginx")
 
     for container in "${containers[@]}"; do
         TOTAL_TESTS=$((TOTAL_TESTS + 1))
@@ -131,7 +131,7 @@ test_gpu() {
     # Test GPU access from main container
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     echo -n "Testing GPU in main container... "
-    if docker exec odins-ai nvidia-smi >/dev/null 2>&1; then
+    if docker exec odins-eye nvidia-smi >/dev/null 2>&1; then
         echo -e "${GREEN}✓ PASS${NC}"
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
@@ -142,7 +142,7 @@ test_gpu() {
     # Test GPU access from Jupyter container
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     echo -n "Testing GPU in Jupyter container... "
-    if docker exec odins-ai-jupyter nvidia-smi >/dev/null 2>&1; then
+    if docker exec odins-eye-jupyter nvidia-smi >/dev/null 2>&1; then
         echo -e "${GREEN}✓ PASS${NC}"
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
@@ -158,7 +158,7 @@ test_databases() {
     # Test PostgreSQL
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     echo -n "Testing PostgreSQL... "
-    if docker exec odins-ai-postgres psql -U odin -d odins_ai -c "SELECT 1;" >/dev/null 2>&1; then
+    if docker exec odins-eye-postgres psql -U odin -d odins_eye -c "SELECT 1;" >/dev/null 2>&1; then
         echo -e "${GREEN}✓ PASS${NC}"
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
@@ -169,7 +169,7 @@ test_databases() {
     # Test Redis
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     echo -n "Testing Redis... "
-    if docker exec odins-ai-redis redis-cli ping | grep -q "PONG" 2>/dev/null; then
+    if docker exec odins-eye-redis redis-cli ping | grep -q "PONG" 2>/dev/null; then
         echo -e "${GREEN}✓ PASS${NC}"
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
@@ -185,7 +185,7 @@ test_ai_frameworks() {
     # Test PyTorch in main container
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     echo -n "Testing PyTorch in main container... "
-    if docker exec odins-ai python3 -c "import torch; print(torch.cuda.is_available())" | grep -q "True" 2>/dev/null; then
+    if docker exec odins-eye python3 -c "import torch; print(torch.cuda.is_available())" | grep -q "True" 2>/dev/null; then
         echo -e "${GREEN}✓ PASS${NC}"
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
@@ -196,7 +196,7 @@ test_ai_frameworks() {
     # Test TensorFlow in Jupyter container
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     echo -n "Testing TensorFlow in Jupyter container... "
-    if docker exec odins-ai-jupyter python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))" >/dev/null 2>&1; then
+    if docker exec odins-eye-jupyter python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))" >/dev/null 2>&1; then
         echo -e "${GREEN}✓ PASS${NC}"
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
@@ -212,7 +212,7 @@ test_networking() {
     # Test container networking
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     echo -n "Testing container network... "
-    if docker network ls | grep -q "odins-ai-network" 2>/dev/null; then
+    if docker network ls | grep -q "odins-eye-network" 2>/dev/null; then
         echo -e "${GREEN}✓ PASS${NC}"
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
@@ -223,7 +223,7 @@ test_networking() {
     # Test inter-container communication
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     echo -n "Testing inter-container communication... "
-    if docker exec odins-ai-postgres psql -U odin -d odins_ai -c "SELECT 1;" >/dev/null 2>&1; then
+    if docker exec odins-eye-postgres psql -U odin -d odins_eye -c "SELECT 1;" >/dev/null 2>&1; then
         echo -e "${GREEN}✓ PASS${NC}"
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else

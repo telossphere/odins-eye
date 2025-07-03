@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Odin's AI Platform - One-Command Deployment Script
-# Deploys the complete Odin's AI platform with all services
+# Odin's Eye Platform - One-Command Deployment Script
+# Deploys the complete Odin's Eye platform with all services
 
 set -e
 
@@ -12,7 +12,7 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-echo -e "${BLUE}🚀 Odin's AI Platform Deployment${NC}"
+echo -e "${BLUE}🚀 Odin's Eye Platform Deployment${NC}"
 echo -e "${CYAN}Complete AI/ML Platform with GPU Support${NC}"
 echo
 
@@ -77,9 +77,9 @@ scrape_configs:
     static_configs:
       - targets: ['node-exporter:9100']
 
-  - job_name: 'odins-ai'
+  - job_name: 'odins-eye'
     static_configs:
-      - targets: ['odins-ai:8080']
+      - targets: ['odins-eye:8080']
 PROMETHEUS_EOF
 
     # Create Nginx configuration
@@ -89,8 +89,8 @@ events {
 }
 
 http {
-    upstream odins_ai {
-        server odins-ai:8080;
+    upstream odins_eye {
+        server odins-eye:8080;
     }
 
     upstream grafana {
@@ -106,7 +106,7 @@ http {
         server_name localhost;
 
         location / {
-            proxy_pass http://odins_ai;
+            proxy_pass http://odins_eye;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

@@ -1,11 +1,11 @@
 # Changelog
 
-All notable changes to the Odin's AI Platform will be documented in this file.
+All notable changes to the Odin's Eye Platform will be documented in this file.
 
-## [1.0.0] - 2024-12-19
+## [1.0.0] - 2024-07-03
 
 ### Added
-- Initial release of Odin's AI Platform
+- Initial release of Odin's Eye Platform
 - Complete AI/ML development environment
 - GPU-accelerated Jupyter Lab
 - Real-time monitoring with Prometheus and Grafana

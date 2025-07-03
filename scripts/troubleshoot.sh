@@ -4,9 +4,10 @@ set -euo pipefail
 # Odin AI Troubleshooting Script
 # Diagnoses and fixes common issues with the Odin AI system
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-CONFIG_FILE="$PROJECT_ROOT/config/deployment.conf"
+# shellcheck source=../config/deployment.conf
+if [[ -f "$(dirname "$0")/../config/deployment.conf" ]]; then
+    source "$(dirname "$0")/../config/deployment.conf"
+fi
 
 # Colors for output
 RED='\033[0;31m'
@@ -17,13 +18,8 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# Load configuration
-if [[ -f "$CONFIG_FILE" ]]; then
-    source "$CONFIG_FILE"
-fi
-
 # Default values
-: "${INSTALL_DIR:=/opt/odins-ai}"
+: "${INSTALL_DIR:=/opt/odins-eye}"
 : "${SYSTEM_USER:=odin}"
 
 # Status indicators
@@ -188,7 +184,7 @@ troubleshoot_permissions() {
     fi
 
     # Check directories and permissions
-    local dirs=("$INSTALL_DIR" "/var/log/odins-ai" "/opt/ai/models" "/opt/ai/huggingface")
+    local dirs=("$INSTALL_DIR" "/var/log/odins-eye" "/opt/ai/models" "/opt/ai/huggingface")
 
     for dir in "${dirs[@]}"; do
         if [[ ! -d "$dir" ]]; then
@@ -198,7 +194,8 @@ troubleshoot_permissions() {
         fi
 
         # Check ownership
-        local owner=$(stat -c '%U' "$dir" 2>/dev/null || echo "unknown")
+        local owner
+        owner=$(stat -c '%U' "$dir" 2>/dev/null || echo "unknown")
         if [[ "$owner" != "$SYSTEM_USER" ]]; then
             echo -e "  ${STATUS_WARN} Wrong ownership for $dir (owner: $owner)"
             echo -e "    ${STATUS_INFO} Fixing ownership..."
@@ -237,12 +234,14 @@ troubleshoot_networking() {
     ip route show | head -10
 
     # Check if we have any IP address
-    local ip_address=$(hostname -I | awk '{print $1}')
+    local ip_address
+    ip_address=$(hostname -I | awk '{print $1}')
     if [[ -n "$ip_address" && "$ip_address" != "127.0.0.1" ]]; then
         echo -e "${GREEN}✅ System has IP address: $ip_address${NC}"
 
         # Find which interface has the IP
-        local active_interface=$(ip route get 8.8.8.8 2>/dev/null | grep -oP 'dev \K\S+' | head -1)
+        local active_interface
+        active_interface=$(ip route get 8.8.8.8 2>/dev/null | grep -oP 'dev \K\S+' | head -1)
         if [[ -n "$active_interface" ]]; then
             echo -e "${GREEN}✅ Active interface: $active_interface${NC}"
         fi
@@ -271,7 +270,8 @@ troubleshoot_networking() {
     echo -e "${YELLOW}🔍 Interface Detection:${NC}"
     for interface in enp7s0 enp6s0 enp5s0 enp4s0 enp3s0 enp2s0 enp1s0 enp0s0; do
         if ip link show "$interface" >/dev/null 2>&1; then
-            local status=$(ip link show "$interface" | grep -o "state [A-Z]*" | cut -d' ' -f2)
+            local status
+            status=$(ip link show "$interface" | grep -o "state [A-Z]*" | cut -d' ' -f2)
             local has_ip=""
             if ip addr show "$interface" | grep -q "inet "; then
                 has_ip=" (has IP)"
@@ -286,8 +286,10 @@ troubleshoot_networking() {
     echo
     echo -e "${YELLOW}🔍 Other Ethernet Interfaces:${NC}"
     ip link show | grep -E "^[0-9]+: en" | while read line; do
-        local interface=$(echo "$line" | cut -d: -f2 | xargs)
-        local status=$(echo "$line" | grep -o "state [A-Z]*" | cut -d' ' -f2)
+        local interface
+        interface=$(echo "$line" | cut -d: -f2 | xargs)
+        local status
+        status=$(echo "$line" | grep -o "state [A-Z]*" | cut -d' ' -f2)
         local has_ip=""
         if ip addr show "$interface" | grep -q "inet "; then
             has_ip=" (has IP)"
@@ -365,8 +367,10 @@ troubleshoot_ai_ml() {
 
     # Check PyTorch
     if python3 -c "import torch" 2>/dev/null; then
-        local torch_version=$(python3 -c "import torch; print(torch.__version__)")
-        local cuda_available=$(python3 -c "import torch; print(torch.cuda.is_available())")
+        local torch_version
+        torch_version=$(python3 -c "import torch; print(torch.__version__)")
+        local cuda_available
+        cuda_available=$(python3 -c "import torch; print(torch.cuda.is_available())")
         echo -e "  ${STATUS_OK} PyTorch $torch_version"
         if [[ "$cuda_available" == "True" ]]; then
             echo -e "    ${STATUS_OK} CUDA available"
@@ -380,7 +384,8 @@ troubleshoot_ai_ml() {
 
     # Check CUDA toolkit
     if command -v nvcc >/dev/null 2>&1; then
-        local cuda_version=$(nvcc --version | grep release | awk '{print $6}')
+        local cuda_version
+        cuda_version=$(nvcc --version | grep release | awk '{print $6}')
         echo -e "  ${STATUS_OK} CUDA Toolkit $cuda_version"
     else
         echo -e "  ${STATUS_WARN} CUDA Toolkit not installed"
@@ -396,7 +401,8 @@ troubleshoot_performance() {
 
     # Check CPU governor
     if [[ -f /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]]; then
-        local governor=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)
+        local governor
+        governor=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)
         if [[ "$governor" == "performance" ]]; then
             echo -e "  ${STATUS_OK} CPU governor: $governor"
         else
@@ -406,7 +412,8 @@ troubleshoot_performance() {
     fi
 
     # Check memory
-    local mem_gb=$(free -g | awk '/^Mem:/{print $2}')
+    local mem_gb
+    mem_gb=$(free -g | awk '/^Mem:/{print $2}')
     if [[ $mem_gb -lt 8 ]]; then
         echo -e "  ${STATUS_WARN} Low memory: ${mem_gb}GB (8GB+ recommended)"
     else
@@ -414,7 +421,8 @@ troubleshoot_performance() {
     fi
 
     # Check disk space
-    local disk_gb=$(df -BG / | awk 'NR==2{print $4}' | sed 's/G//')
+    local disk_gb
+    disk_gb=$(df -BG / | awk 'NR==2{print $4}' | sed 's/G//')
     if [[ $disk_gb -lt 50 ]]; then
         echo -e "  ${STATUS_WARN} Low disk space: ${disk_gb}GB (50GB+ recommended)"
     else
@@ -423,7 +431,8 @@ troubleshoot_performance() {
 
     # Check GPU temperature
     if command -v nvidia-smi >/dev/null 2>&1; then
-        local gpu_temp=$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits | head -1)
+        local gpu_temp
+        gpu_temp=$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits | head -1)
         if [[ $gpu_temp -gt 80 ]]; then
             echo -e "  ${STATUS_WARN} High GPU temperature: ${gpu_temp}°C"
         else
@@ -439,10 +448,10 @@ analyze_logs() {
     print_section "Log Analysis"
 
     # Check deployment log
-    if [[ -f /var/log/odins-ai-deployment.log ]]; then
+    if [[ -f /var/log/odins-eye-deployment.log ]]; then
         echo -e "  ${STATUS_INFO} Deployment log found"
         echo -e "    Last 10 lines:"
-        tail -10 /var/log/odins-ai-deployment.log | sed 's/^/      /'
+        tail -10 /var/log/odins-eye-deployment.log | sed 's/^/      /'
     else
         echo -e "  ${STATUS_WARN} Deployment log not found"
     fi
@@ -454,7 +463,7 @@ analyze_logs() {
     # Check Docker logs
     if command -v docker >/dev/null 2>&1; then
         echo -e "  ${STATUS_INFO} Recent Docker errors:"
-        docker logs --tail 10 $(docker ps -q) 2>&1 | grep -i error | tail -5 | sed 's/^/    /' || echo "    No recent Docker errors"
+        docker logs --tail 10 "$(docker ps -q)" 2>&1 | grep -i error | tail -5 | sed 's/^/    /' || echo "    No recent Docker errors"
     fi
 
     echo
@@ -478,7 +487,7 @@ fix_common_issues() {
 
     # Fix permissions
     echo -e "  ${STATUS_INFO} Fixing permissions..."
-    chown -R "$SYSTEM_USER:$SYSTEM_USER" "$INSTALL_DIR" /opt/ai /var/log/odins-ai 2>/dev/null || true
+    chown -R "$SYSTEM_USER:$SYSTEM_USER" "$INSTALL_DIR" /opt/ai /var/log/odins-eye 2>/dev/null || true
 
     echo -e "  ${STATUS_OK} Common fixes applied"
     echo
@@ -497,7 +506,7 @@ print_summary() {
     echo -e "4. Test Docker: docker run --rm --runtime=nvidia --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi"
     echo
     echo -e "${CYAN}If issues persist:${NC}"
-    echo -e "1. Check logs: tail -f /var/log/odins-ai-deployment.log"
+    echo -e "1. Check logs: tail -f /var/log/odins-eye-deployment.log"
     echo -e "2. Reboot system: sudo reboot"
     echo -e "3. Reinstall: sudo ./scripts/deploy.sh"
     echo

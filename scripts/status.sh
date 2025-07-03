@@ -4,9 +4,10 @@ set -euo pipefail
 # Odin AI Status Check Script
 # Provides comprehensive status information about the Odin AI system
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-CONFIG_FILE="$PROJECT_ROOT/config/deployment.conf"
+# shellcheck source=../config/deployment.conf
+if [[ -f "$(dirname "$0")/../config/deployment.conf" ]]; then
+    source "$(dirname "$0")/../config/deployment.conf"
+fi
 
 # Colors for output
 RED='\033[0;31m'
@@ -17,13 +18,8 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# Load configuration
-if [[ -f "$CONFIG_FILE" ]]; then
-    source "$CONFIG_FILE"
-fi
-
 # Default values
-: "${INSTALL_DIR:=/opt/odins-ai}"
+: "${INSTALL_DIR:=/opt/odins-eye}"
 : "${SYSTEM_USER:=odin}"
 
 # Status indicators
@@ -65,25 +61,34 @@ check_hardware_info() {
     print_section "Hardware Information"
 
     # CPU
-    local cpu_cores=$(nproc)
-    local cpu_model=$(grep "model name" /proc/cpuinfo | head -1 | cut -d':' -f2 | xargs)
+    local cpu_cores
+    cpu_cores=$(nproc)
+    local cpu_model
+    cpu_model=$(grep "model name" /proc/cpuinfo | head -1 | cut -d':' -f2 | xargs)
     echo -e "CPU: ${STATUS_INFO} $cpu_model ($cpu_cores cores)"
 
     # Memory
-    local mem_total=$(free -h | awk '/^Mem:/{print $2}')
-    local mem_used=$(free -h | awk '/^Mem:/{print $3}')
-    local mem_available=$(free -h | awk '/^Mem:/{print $7}')
+    local mem_total
+    mem_total=$(free -h | awk '/^Mem:/{print $2}')
+    local mem_used
+    mem_used=$(free -h | awk '/^Mem:/{print $3}')
+    local mem_available
+    mem_available=$(free -h | awk '/^Mem:/{print $7}')
     echo -e "Memory: ${STATUS_INFO} $mem_used / $mem_total (Available: $mem_available)"
 
     # Disk
-    local disk_usage=$(df -h / | awk 'NR==2{print $5}')
-    local disk_available=$(df -h / | awk 'NR==2{print $4}')
+    local disk_usage
+    disk_usage=$(df -h / | awk 'NR==2{print $5}')
+    local disk_available
+    disk_available=$(df -h / | awk 'NR==2{print $4}')
     echo -e "Disk: ${STATUS_INFO} $disk_usage used (Available: $disk_available)"
 
     # GPU
     if command -v nvidia-smi >/dev/null 2>&1; then
-        local gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader,nounits | head -1)
-        local gpu_memory=$(nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits | head -1)
+        local gpu_name
+        gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader,nounits | head -1)
+        local gpu_memory
+        gpu_memory=$(nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits | head -1)
         echo -e "GPU: ${STATUS_INFO} $gpu_name"
         echo -e "GPU Memory: ${STATUS_INFO} $gpu_memory"
     else
@@ -105,8 +110,10 @@ check_services() {
     )
 
     for service_info in "${services[@]}"; do
-        local service_name="${service_info%%:*}"
-        local display_name="${service_info##*:}"
+        local service_name
+        service_name="${service_info%%:*}"
+        local display_name
+        display_name="${service_info##*:}"
 
         if systemctl is-active "$service_name" >/dev/null 2>&1; then
             echo -e "$display_name: ${STATUS_OK} Active"
@@ -133,7 +140,8 @@ check_docker_containers() {
         return
     fi
 
-    local containers=$(docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}")
+    local containers
+    containers=$(docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}")
     if [[ -n "$containers" ]]; then
         echo "$containers"
     else
@@ -154,7 +162,8 @@ check_network() {
     fi
 
     # Local IP
-    local local_ip=$(hostname -I | awk '{print $1}')
+    local local_ip
+    local_ip=$(hostname -I | awk '{print $1}')
     echo -e "Local IP: ${STATUS_INFO} $local_ip"
 
     # Open ports
@@ -176,7 +185,8 @@ check_ai_environment() {
 
     # Python
     if command -v python3 >/dev/null 2>&1; then
-        local python_version=$(python3 --version)
+        local python_version
+        python_version=$(python3 --version)
         echo -e "Python: ${STATUS_OK} $python_version"
     else
         echo -e "Python: ${STATUS_ERROR} Not installed"
@@ -184,8 +194,10 @@ check_ai_environment() {
 
     # PyTorch
     if python3 -c "import torch" 2>/dev/null; then
-        local torch_version=$(python3 -c "import torch; print(torch.__version__)")
-        local cuda_available=$(python3 -c "import torch; print(torch.cuda.is_available())")
+        local torch_version
+        torch_version=$(python3 -c "import torch; print(torch.__version__)")
+        local cuda_available
+        cuda_available=$(python3 -c "import torch; print(torch.cuda.is_available())")
         echo -e "PyTorch: ${STATUS_OK} $torch_version"
         if [[ "$cuda_available" == "True" ]]; then
             echo -e "  CUDA: ${STATUS_OK} Available"
@@ -198,7 +210,8 @@ check_ai_environment() {
 
     # TensorFlow
     if python3 -c "import tensorflow" 2>/dev/null; then
-        local tf_version=$(python3 -c "import tensorflow as tf; print(tf.__version__)")
+        local tf_version
+        tf_version=$(python3 -c "import tensorflow as tf; print(tf.__version__)")
         echo -e "TensorFlow: ${STATUS_OK} $tf_version"
     else
         echo -e "TensorFlow: ${STATUS_WARN} Not installed"
@@ -206,7 +219,8 @@ check_ai_environment() {
 
     # CUDA
     if command -v nvcc >/dev/null 2>&1; then
-        local cuda_version=$(nvcc --version | grep release | awk '{print $6}')
+        local cuda_version
+        cuda_version=$(nvcc --version | grep release | awk '{print $6}')
         echo -e "CUDA Toolkit: ${STATUS_OK} $cuda_version"
     else
         echo -e "CUDA Toolkit: ${STATUS_WARN} Not installed"
@@ -220,7 +234,7 @@ check_filesystem() {
 
     local dirs=(
         "$INSTALL_DIR:Installation Directory"
-        "/var/log/odins-ai:Log Directory"
+        "/var/log/odins-eye:Log Directory"
         "/opt/ai/models:AI Models"
         "/opt/ai/huggingface:HuggingFace Cache"
         "/opt/ai/transformers:Transformers Cache"
@@ -228,11 +242,14 @@ check_filesystem() {
     )
 
     for dir_info in "${dirs[@]}"; do
-        local dir_path="${dir_info%%:*}"
-        local dir_name="${dir_info##*:}"
+        local dir_path
+        dir_path="${dir_info%%:*}"
+        local dir_name
+        dir_name="${dir_info##*:}"
 
         if [[ -d "$dir_path" ]]; then
-            local dir_size=$(du -sh "$dir_path" 2>/dev/null | cut -f1)
+            local dir_size
+            dir_size=$(du -sh "$dir_path" 2>/dev/null | cut -f1)
             echo -e "$dir_name: ${STATUS_OK} Exists ($dir_size)"
         else
             echo -e "$dir_name: ${STATUS_WARN} Missing"
@@ -246,28 +263,34 @@ check_performance() {
     print_section "Performance Metrics"
 
     # CPU usage
-    local cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
+    local cpu_usage
+    cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
     echo -e "CPU Usage: ${STATUS_INFO} ${cpu_usage}%"
 
     # Memory usage
-    local mem_usage=$(free | awk '/^Mem:/{printf "%.1f", $3/$2*100}')
+    local mem_usage
+    mem_usage=$(free | awk '/^Mem:/{printf "%.1f", $3/$2*100}')
     echo -e "Memory Usage: ${STATUS_INFO} ${mem_usage}%"
 
     # Disk usage
-    local disk_usage=$(df / | awk 'NR==2{print $5}' | sed 's/%//')
+    local disk_usage
+    disk_usage=$(df / | awk 'NR==2{print $5}' | sed 's/%//')
     echo -e "Disk Usage: ${STATUS_INFO} ${disk_usage}%"
 
     # GPU usage (if available)
     if command -v nvidia-smi >/dev/null 2>&1; then
-        local gpu_util=$(nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | head -1)
-        local gpu_mem_util=$(nvidia-smi --query-gpu=utilization.memory --format=csv,noheader,nounits | head -1)
+        local gpu_util
+        gpu_util=$(nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | head -1)
+        local gpu_mem_util
+        gpu_mem_util=$(nvidia-smi --query-gpu=utilization.memory --format=csv,noheader,nounits | head -1)
         echo -e "GPU Utilization: ${STATUS_INFO} ${gpu_util}%"
         echo -e "GPU Memory Utilization: ${STATUS_INFO} ${gpu_mem_util}%"
     fi
 
     # Temperature (if available)
     if [[ -f /sys/class/thermal/thermal_zone0/temp ]]; then
-        local temp=$(($(cat /sys/class/thermal/thermal_zone0/temp) / 1000))
+        local temp
+        temp=$(($(cat /sys/class/thermal/thermal_zone0/temp) / 1000))
         echo -e "CPU Temperature: ${STATUS_INFO} ${temp}°C"
     fi
     echo
@@ -304,9 +327,10 @@ check_security() {
         echo -e "Fail2Ban: ${STATUS_ERROR} Inactive"
     fi
 
-    # Recent login attempts
-    local failed_attempts=$(grep "Failed password" /var/log/auth.log | wc -l)
-    echo -e "Failed Login Attempts (recent): ${STATUS_INFO} $failed_attempts"
+    # Failed login attempts
+    local failed_attempts
+    failed_attempts=$(grep "Failed password" /var/log/auth.log | wc -l)
+    echo -e "Failed SSH login attempts: $failed_attempts"
     echo
 }
 
@@ -314,18 +338,11 @@ check_security() {
 print_summary() {
     print_section "System Summary"
 
-    local total_checks=0
-    local passed_checks=0
-    local failed_checks=0
-
-    # Count checks (simplified)
-    total_checks=25  # Approximate number of checks
-
     echo -e "System Status: ${STATUS_OK} Operational"
     echo -e "Last Check: $(date)"
     echo -e "Next Check: $(date -d '+5 minutes')"
     echo
-    echo -e "${CYAN}For detailed logs, check: /var/log/odins-ai/${NC}"
+    echo -e "${CYAN}For detailed logs, check: /var/log/odins-eye/${NC}"
     echo -e "${CYAN}For configuration, check: $INSTALL_DIR/config/${NC}"
 }
 

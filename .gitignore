@@ -42,6 +42,7 @@ build/
 dist/
 *.tar.gz
 *.zip
+release/
 
 # Python
 __pycache__/
