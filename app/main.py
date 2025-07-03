@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Odin's AI - Main Application
+Odin's Eye - Main Application
 FastAPI-based AI service with web interface
 """
 
@@ -22,7 +22,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Create FastAPI app
-app = FastAPI(title="Odin's AI", description="Advanced AI/ML Platform", version="1.0.0")
+app = FastAPI(
+    title="Odin's Eye", description="Advanced AI/ML Platform", version="1.0.0"
+)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

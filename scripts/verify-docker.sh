@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Odin's AI Docker Verification Script
+# Odin's Eye Docker Verification Script
 # Tests the containerized deployment instead of bare metal services
 
 set -e
@@ -243,7 +243,7 @@ print_summary() {
     echo -e "Success rate: ${success_rate}%"
 
     if [[ $FAILED_TESTS -eq 0 ]]; then
-        echo -e "\n${GREEN}🎉 All Docker tests passed! Odin's AI Platform is running correctly.${NC}"
+        echo -e "\n${GREEN}🎉 All Docker tests passed! Odin's Eye Platform is running correctly.${NC}"
         return 0
     else
         echo -e "\n${YELLOW}⚠️  Some tests failed. Check container logs: cd docker && docker compose logs${NC}"
@@ -253,7 +253,7 @@ print_summary() {
 
 # Main function
 main() {
-    echo -e "${BLUE}Odin's AI Docker Verification Script${NC}"
+    echo -e "${BLUE}Odin's Eye Docker Verification Script${NC}"
     echo "============================================="
 
     test_containers

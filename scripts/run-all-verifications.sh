@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Odin's AI Complete Verification Test Runner
+# Odin's Eye Complete Verification Test Runner
 # Runs all verification scripts in optimal order
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -35,7 +35,7 @@ log() {
 # Print header
 print_header() {
     echo -e "${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║              🧪 Odin's AI Verification Test Suite           ║${NC}"
+    echo -e "${CYAN}║              🧪 Odin's Eye Verification Test Suite           ║${NC}"
     echo -e "${CYAN}║              Complete Docker Deployment Verification        ║${NC}"
     echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}"
     echo
@@ -226,7 +226,7 @@ print_summary() {
 
     echo
     if [[ $FAILED_TESTS -eq 0 ]]; then
-        echo -e "${GREEN}🎉 All verification tests passed! Odin's AI Platform is running correctly.${NC}"
+        echo -e "${GREEN}🎉 All verification tests passed! Odin's Eye Platform is running correctly.${NC}"
         echo -e "${CYAN}💡 Your Docker deployment is healthy and ready for use.${NC}"
         return 0
     else

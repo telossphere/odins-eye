@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Odin's AI - Dashboard</title>
+    <title>Odin's Eye - Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -33,7 +34,7 @@
         .header h1 {
             font-size: 3rem;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .header p {
@@ -52,13 +53,13 @@
             background: white;
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
         }
 
         .card h3 {
@@ -169,10 +170,11 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
-            <h1>🪄 Odin's AI</h1>
+            <h1>🪄 Odin's Eye</h1>
             <p>Advanced AI/ML Platform Dashboard</p>
         </div>
 
@@ -223,7 +225,8 @@
             <div class="card">
                 <h3>📊 GPU Monitor</h3>
                 <div style="text-align: center; padding: 20px;">
-                    <p style="margin-bottom: 15px; color: #666;">Real-time GPU monitoring with charts and process tracking</p>
+                    <p style="margin-bottom: 15px; color: #666;">Real-time GPU monitoring with charts and process
+                        tracking</p>
                     <a href="/gpu" style="
                         display: inline-block;
                         background: linear-gradient(135deg, #667eea, #764ba2);
@@ -263,7 +266,7 @@
         }
 
         function getStatusClass(status) {
-            switch(status.toLowerCase()) {
+            switch (status.toLowerCase()) {
                 case 'running':
                 case 'online':
                     return 'status-online';
@@ -504,4 +507,5 @@
         setInterval(refreshData, 30000);
     </script>
 </body>
+
 </html>

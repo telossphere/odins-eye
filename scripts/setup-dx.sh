@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Odin's AI Platform - Developer Experience Setup Script
+# Odin's Eye Platform - Developer Experience Setup Script
 # Installs all linting, formatting, and development tools
 
 set -e

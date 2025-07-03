@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Odin's AI Service Verification Script
+# Odin's Eye Service Verification Script
 # Tests all deployed Docker services
 
 set -e
@@ -12,7 +12,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🔍 Odin's AI Service Verification${NC}"
+echo -e "${BLUE}🔍 Odin's Eye Service Verification${NC}"
 echo "=================================="
 echo
 
